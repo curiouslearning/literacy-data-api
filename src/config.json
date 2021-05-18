@@ -1,0 +1,7 @@
+{
+  "port":"3000",
+  "fetchLatestQuery": {
+    "string": "SELECT * FROM @table WHERE event_timestamp + event_timestamp_offset >= @cursor",
+    "loc": "US"
+  }
+}
