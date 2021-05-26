@@ -1,8 +1,10 @@
 const sinon = require('sinon');
 const express = require ('express');
 const proxyquire = require('proxyquire').noPreserveCache();
+const fs = require('fs');
 const bq =  require('@google-cloud/bigquery');
 const http = require('http');
+const testData = require('./testTableMap.json');
 const sandbox = sinon.createSandbox();
 
 function initGetTest() {
@@ -57,20 +59,7 @@ function initFetchLatest() {
 function initSetTable() {
   let utils = {};
 
-  utils['data'] = [
-    {
-      id: 'com.test.app.id',
-      project: 'test-proj',
-      table: 'test-table',
-      dataset: 'test-dataset',
-    },
-    {
-      id: 'com.wrong.app.id',
-      project: 'test-proj',
-      table: 'wrong-table',
-      dataset: 'wrong-dataset',
-    },
-  ];
+  utils['data'] = testData;
   const table = {
     exists: sandbox.stub().resolves(),
   };
@@ -97,6 +86,24 @@ function initSetTable() {
     utils.index.server.close();
     return res;
   };
+  return utils;
+}
+
+function initLoadMap () {
+  let utils = {};
+  utils['data'] = testData;
+  const fs = {
+    readFileSync: sandbox.stub().returns(utils.data),
+  };
+  utils['fs'] = fs;
+  utils['index'] = proxyquire('../src/index', {
+    'fs': fs,
+  });
+  utils['run'] = () => {
+    const res = utils.index.loadTableMap();
+    utils.index.server.close();
+    return res;
+  }
   return utils;
 }
 
@@ -284,6 +291,44 @@ describe('app', () => {
       } catch(e) {
         utils.index.server.close();
         e.message.should.equal(`cannot parse app id: '${id}'. Check formatting and try again`);
+      }
+    });
+  });
+
+  describe('loadTableMap', () => {
+    beforeEach(() => {
+
+    });
+    afterEach(() => {
+
+    });
+    it('should return an array of JSON objects', ()=> {
+      let utils = initLoadMap();
+      const res = utils.run();
+      res.should.deep.equal(utils.data);
+    });
+    it('should throw an error on a missing file', () => {
+      let utils = initLoadMap();
+      const err = new Error("ENOENT");
+      utils.fs.readFileSync.throws(err);
+      try {
+        const res = utils.run();
+        res.should.not.deep.equal(utils.data);
+      } catch (e) {
+        utils.index.server.close();
+        e.message.should.equal(err.message);
+      }
+    });
+    it('should throw an error on a read failure', () => {
+      let utils = initLoadMap();
+      const err = new Error("EADDRNOTAVAIL");
+      utils.fs.readFileSync.throws(err);
+      try {
+        const res = utils.run();
+        res.should.not.deep.equal(utils.data);
+      } catch (e) {
+        utils.index.server.close();
+        e.message.should.equal(err.message);
       }
     });
   });

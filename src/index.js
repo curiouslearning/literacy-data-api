@@ -1,6 +1,7 @@
 const http = require('http');
 const url = require('url');
 const express = require('express');
+const fs = require('fs');
 const { BigQuery } = require('@google-cloud/bigquery');
 const app = express();
 const config = require('./config');
@@ -29,6 +30,8 @@ async function getTable(id) {
 }
 
 function loadTableMap() {
+  const res = fs.readFileSync(`./${config.loadTableMap.mapFile}`, 'utf8');
+  return res;
 }
 
 async function fetchLatestHandler (req, res) {
@@ -79,6 +82,7 @@ async function fetchLatestHandler (req, res) {
     });
   }
 }
+
 app.get('fetch_latest*', fetchLatestHandler);
 
 const server = app.listen(port, () => {
