@@ -35,7 +35,7 @@
   {"id": "com.eduapp4syria.feedthemonsterBrazilianPortuguese", "project": "ftm-brazilian-portuguese", "dataset": "analytics_161789655", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterTswana", "project": "ftm-brazilian-portuguese", "dataset": "analytics_161789655", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterLugandan", "project": "ftm-brazilian-portuguese", "dataset": "analytics_161789655", "table": "events_*"},
-  {"id": "com.eduapp4syria.feedthemonsterZulu", "project": "ftm-zulu", "dataset": "analytics_155849122", "table": "events_*"},
+  {"id": "com.eduapp4syria.FeedTheMonsterZULU", "project": "ftm-zulu", "dataset": "analytics_155849122", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterSwahili", "project": "ftm-swahili", "dataset": "analytics_160694316", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterFrench", "project": "ftm-french", "dataset": "analytics_173880465", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterAfrikaans", "project": "ftm-afrikaans", "dataset": "analytics_177200876", "table": "events_*"},
@@ -48,7 +48,7 @@
   {"id": "com.eduapp4syria.feedthemonsterKinyarwanda", "project": "ftm-kinyarwanda", "dataset": "analytics_177922191", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterOromo", "project": "ftm-oromo", "dataset": "analytics_167539175", "table": "events_*"},
   {"id": "com.eduapp4syria.feedthemonsterSePedi", "project": "ftm-sepedi", "dataset": "analytics_180755978", "table": "events_*"},
-  {"id": "com.eduapp4syria.feedthemonsterSomali", "project": "ftm-somali", "dataset": "analytics_159630038", "table": "events_*"},
-  {"id": "com.eduapp4syria.feedthemonsterSouthAfricanEnglish", "project": "ftm-southafricanenglish", "dataset": "analytics_173750850", "table": "events_*"},
-  {"id": "com.eduapp4syria.feedthemonsterSpanish", "project": "ftm-spanish", "dataset": "analytics_158656398", "table": "events_*"}
+  {"id": "com.eduapp4syria.feedthemonsterSOMALI", "project": "ftm-somali", "dataset": "analytics_159630038", "table": "events_*"},
+  {"id": "com.eduapp4syria.feedthemonsterSAEnglish", "project": "ftm-southafricanenglish", "dataset": "analytics_173750850", "table": "events_*"},
+  {"id": "com.eduapp4syria.feedthemonsterSPANISH", "project": "ftm-spanish", "dataset": "analytics_158656398", "table": "events_*"}
 ]

@@ -11,10 +11,10 @@ function initGetTest() {
   this.request = sandbox.stub(http, 'request');
   let utils = {};
   utils['data'] = [
-    {user_pseudo_id: 'user1', event_date: '20210503', event_timestamp: '6285654678', event_timestamp_offest: '65765', app_info: {id: 'com.test.app'}},
-    {user_pseudo_id: 'user2', event_date: '20210504', event_timestamp: '6295654678', event_timestamp_offest: '95465', app_info: {id: 'com.test.app'}},
-    {user_pseudo_id: 'user3', event_date: '20210501', event_timestamp: '6235654678', event_timestamp_offest: '65365', app_info: {id: 'com.test.app'}},
-    {user_pseudo_id: 'user4', event_date: '20210503', event_timestamp: '6285657678', event_timestamp_offest: '65065', app_info: {id: 'com.test.app'}},
+    {user_pseudo_id: 'user1', event_date: '20210503', event_timestamp: '6285654678', event_timestamp_offest: '65765', app_info: {id: 'com.test.app.id'}},
+    {user_pseudo_id: 'user2', event_date: '20210504', event_timestamp: '6295654678', event_timestamp_offest: '95465', app_info: {id: 'com.test.app.id'}},
+    {user_pseudo_id: 'user3', event_date: '20210501', event_timestamp: '6235654678', event_timestamp_offest: '65365', app_info: {id: 'com.test.app.id'}},
+    {user_pseudo_id: 'user4', event_date: '20210503', event_timestamp: '6285657678', event_timestamp_offest: '65065', app_info: {id: 'com.test.app.id'}},
   ];
 
   utils['res'] = {};
@@ -40,9 +40,8 @@ function initGetTest() {
   utils['queryStub'] = bigquery;
   utils['index'] = proxyquire('../src/index', {
     '@google-cloud/bigquery': {BigQuery: BigQueryStub},
+    './tableMap': require('./testTableMap.json'),
   });
-  utils['getTableStub'] = sandbox.stub(utils.index, 'getTable');
-  utils.getTableStub.returns('test-table');
   return utils;
 }
 
@@ -77,10 +76,8 @@ function initSetTable() {
   utils['querystub'] = BigQueryStub;
   utils['index'] = proxyquire('../src/index', {
     '@google-cloud/bigquery': {BigQuery: BigQueryStub},
-    'loadTableMap': sandbox.stub
+    './tableMap': require('./testTableMap.json'),
   });
-  utils['mapStub']= sandbox.stub(utils.index, 'loadTableMap');
-  utils.mapStub.returns(utils.data);
   utils['run'] = async (id) => {
     const res = await utils.index.getTable(id);
     utils.index.server.close();
@@ -119,9 +116,9 @@ describe('app', () => {
     it('should return 200 when successful', async () => {
       let utils = initGetTest();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.app&from=618984568766`,
-        body: {
-          app_id: 'com.test.app',
+        url: `/fetch_latest?app_id=com.test.app&from=618984568766`,
+        query: {
+          app_id: 'com.test.app.id',
           from:   '618984568766',
         },
       };
@@ -133,9 +130,9 @@ describe('app', () => {
     it('should return the data', async() => {
       let utils = initGetTest();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.app&from=618984568766`,
-        body: {
-          app_id: 'com.test.app',
+        url: `/fetch_latest?app_id=com.test.app&from=618984568766`,
+        query: {
+          app_id: 'com.test.app.id',
           from:   '618984568766',
         },
       };
@@ -147,15 +144,12 @@ describe('app', () => {
     it('should return a 400 response on malformed app id', async () => {
       let utils = initGetTest();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.@pp&from=618984568766`,
-        body: {
+        url: `/fetch_latest?app_id=com.test.@pp&from=618984568766`,
+        query: {
           app_id: 'com.test.@pp',
           from: '618984568766',
         },
       };
-      const err = new Error ('fake error');
-      err.name = 'MalformedArgumentError';
-      utils.getTableStub.throws(err);
       let run = initFetchLatest();
       await run(utils.event, utils.res, utils.index);
       utils.res.status.should.have.been.calledWith(400);
@@ -163,15 +157,12 @@ describe('app', () => {
     it('should return a 400 response on malformed cursor', async () => {
       let utils = initGetTest();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.app&from=cursor`,
-        body: {
-          app_id: 'com.test.app',
+        url: `/fetch_latest?app_id=com.test.app&from=cursor`,
+        query: {
+          app_id: 'com.test.app.id',
           from: 'cursor',
         },
       };
-      const err = new Error ('fake error');
-      err.name = 'malformed;'
-      utils.getTableStub.throws(err);
       let run = initFetchLatest();
       await run(utils.event, utils.res, utils.index);
       utils.res.status.should.have.been.calledWith(400);
@@ -181,9 +172,9 @@ describe('app', () => {
       let utils = initGetTest();
       utils.queryStub.createQueryJob.rejects();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.app&from=618984568766`,
-        body: {
-          app_id: 'com.test.app',
+        url: `/fetch_latest?app_id=com.test.app&from=618984568766`,
+        query: {
+          app_id: 'com.test.app.id',
           from: '618984568766',
         },
       };
@@ -195,8 +186,8 @@ describe('app', () => {
     it('should throw an error if auth fails for the table', async () => {
       let utils = initGetTest();
       utils.event = {
-        url: `https://followthelearners.curiouslearning.org/fetch_latest?app_id=com.test.app&from=654982341687`,
-        body: {
+        url: `?app_id=com.test.app&from=654982341687`,
+        query: {
           app_id: 'com.test.app',
           from: '654982341687',
         },
@@ -223,29 +214,6 @@ describe('app', () => {
       sandbox.restore();
     });
 
-    it('should stub out loadTableMap', () => {
-      let utils = initSetTable();
-      const map = utils.index.loadTableMap();
-      map.should.deep.equal(utils.data);
-      utils.index.server.close();
-    });
-    it('the data should be of type Array', () => {
-      let utils = initSetTable();
-      const map = utils.index.loadTableMap();
-      map.should.be.an('array');
-      utils.index.server.close();
-    });
-    it('should call the map stub', async () => {
-      let utils = initSetTable();
-      try {
-        const expected = utils.data[0];
-        await utils.run(expected.id);
-        utils.mapStub.should.have.been.called;
-      } catch (e) {
-        utils.index.server.close();
-        throw e;
-      }
-    })
     it('should return the table that matches the app id', async () => {
       let utils = initSetTable();
       try {
@@ -291,44 +259,6 @@ describe('app', () => {
       } catch(e) {
         utils.index.server.close();
         e.message.should.equal(`cannot parse app id: '${id}'. Check formatting and try again`);
-      }
-    });
-  });
-
-  describe('loadTableMap', () => {
-    beforeEach(() => {
-
-    });
-    afterEach(() => {
-
-    });
-    it('should return an array of JSON objects', ()=> {
-      let utils = initLoadMap();
-      const res = utils.run();
-      res.should.deep.equal(utils.data);
-    });
-    it('should throw an error on a missing file', () => {
-      let utils = initLoadMap();
-      const err = new Error("ENOENT");
-      utils.fs.readFileSync.throws(err);
-      try {
-        const res = utils.run();
-        res.should.not.deep.equal(utils.data);
-      } catch (e) {
-        utils.index.server.close();
-        e.message.should.equal(err.message);
-      }
-    });
-    it('should throw an error on a read failure', () => {
-      let utils = initLoadMap();
-      const err = new Error("EADDRNOTAVAIL");
-      utils.fs.readFileSync.throws(err);
-      try {
-        const res = utils.run();
-        res.should.not.deep.equal(utils.data);
-      } catch (e) {
-        utils.index.server.close();
-        e.message.should.equal(err.message);
       }
     });
   });
