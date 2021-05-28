@@ -4,7 +4,7 @@
     "string": "SELECT * FROM @table WHERE _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)) AND event_timestamp + event_server_timestamp_offset >= @cursor",
     "loc": "US"
   },
-  "loadTableMap": {
-    "mapFile": "/src/tableMap.json"
-  }
+  "errNoId": "Please provide an app id to search against",
+  "errNoCursor": "Please provide a Unix timestamp in ms",
+  "errBadCursor": "Cursor must be a Unix timestamp in ms"
 }

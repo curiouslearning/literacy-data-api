@@ -7,6 +7,7 @@ const http = require('http');
 const testData = require('./testTableMap.json');
 const sandbox = sinon.createSandbox();
 
+/********************Test Initializers****************************************/
 function initGetTest() {
   this.request = sandbox.stub(http, 'request');
   let utils = {};
@@ -86,24 +87,7 @@ function initSetTable() {
   return utils;
 }
 
-function initLoadMap () {
-  let utils = {};
-  utils['data'] = testData;
-  const fs = {
-    readFileSync: sandbox.stub().returns(utils.data),
-  };
-  utils['fs'] = fs;
-  utils['index'] = proxyquire('../src/index', {
-    'fs': fs,
-  });
-  utils['run'] = () => {
-    const res = utils.index.loadTableMap();
-    utils.index.server.close();
-    return res;
-  }
-  return utils;
-}
-
+/*****************************Test Suite***************************************/
 describe('app', () => {
   afterEach(() => {
     sandbox.restore();
@@ -188,7 +172,7 @@ describe('app', () => {
       utils.event = {
         url: `?app_id=com.test.app&from=654982341687`,
         query: {
-          app_id: 'com.test.app',
+          app_id: 'com.test.app.id',
           from: '654982341687',
         },
       };

@@ -8,6 +8,11 @@ const config = require('./config');
 const tableMap = require('./tableMap');
 const port = config.port || 3000;
 
+/**
+* returns the table containing records from the given app id
+* @param{string} id the app id
+* @returns{string} the table name in SQL table format
+*/
 const getTable = function (id) {
   const regex = /(^[a-z]{2,3})([\.][a-z0-9]*)+$/gmi;
   if (!id.match(regex)) {
@@ -26,18 +31,26 @@ const getTable = function (id) {
   const project = obj.project;
   const datasetId = obj.dataset;
   const tableId = obj.table;
-  return `${project}.${datasetId}.${tableId}`
+  return `${project}.${datasetId}.${tableId}`;
 }
 
+/**
+* handler for GET requests to /fetch_latest
+* returns all records for app_id logged after the given cursor
+* @param{obj} req the request
+* @param{obj} res the response
+*/
 const fetchLatestHandler = async function (req, res) {
   const searchParams = req.query;
+
   if (!searchParams.app_id) {
-    return res.status(400).send({msg: 'Please specify the value of app_id'});
+    return res.status(400).send({msg: config.errNoId});
   } else if (!searchParams.from) {
-    return res.status(400).send({msg: 'Please specify the value of cursor'});
+    return res.status(400).send({msg: config.errNoCursor});
   } else if (!searchParams.from.match(/[0-9]+/gmi)) {
-    return res.status(400).send({msg: `value of 'from' must be a Unix timestamp`});
+    return res.status(400).send({msg: config.errBadCursor});
   }
+
   const sqlQueryString = config.fetchLatestQuery.string;
   const options = {
     query: sqlQueryString,
@@ -47,11 +60,26 @@ const fetchLatestHandler = async function (req, res) {
       cursor: Number(searchParams.from),
     },
   };
+
   try{
-    const bq = new BigQuery();
     const table = getTable(options.params.app_id);
     options.query = options.query.replace('@table', `\`${table}\``);
-    const rows = await bq.createQueryJob(options).then((data) => {
+    const rows = await runBigQueryJob(options);
+    return res.status(200).json(rows).send();
+  } catch (e) {
+    return handleError(e, res);
+  }
+}
+
+// TODO: support for pagination tokens on large result sets
+/**
+* create a bigquery job with given options, then await its completion
+* @param{obj} options the QueryJobOptions object
+* @returns{Array<obj>} the query result as an array of row objects
+*/
+function runBigQueryJob(options) {
+  const bq = new BigQuery();
+  return bq.createQueryJob(options).then((data) => {
       if (data) {
         return data[0].getQueryResults(data[0]).then((result) => {
           return result[0];
@@ -62,22 +90,23 @@ const fetchLatestHandler = async function (req, res) {
         throw new Error('error creating the query job')
       }
     }).catch((err) => {throw err;});
-    return res.status(200).json(rows).send();
-  } catch (e) {
-    console.log(e);
-    if(e.name === 'MalformedArgumentError') {
-      return res.status(400).send({
-        msg: 'error in one or more arguments',
-        err: e,
-      });
-    }
-    return res.status(500).send({
-      msg: 'The data could not be fetched',
+}
+
+function handleError(e, res) {
+  console.log(e);
+  if(e.name === 'MalformedArgumentError') {
+    return res.status(400).send({
+      msg: 'error in one or more arguments',
       err: e,
     });
   }
+  return res.status(500).send({
+    msg: 'The data could not be fetched',
+    err: e,
+  });
 }
 
+// routes
 app.get('/fetch_latest*', fetchLatestHandler);
 
 const server = app.listen(port, () => {
