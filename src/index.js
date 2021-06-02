@@ -13,7 +13,7 @@ const port = config.port || 3000;
 * @param{string} id the app id
 * @returns{string} the table name in SQL table format
 */
-const getTable = function (id) {
+const getTable = function (map, id) {
   const regex = /(^[a-z]{2,3})([\.][a-z0-9]*)+$/gmi;
   if (!id.match(regex)) {
     const msg = `cannot parse app id: '${id}'. Check formatting and try again`;
@@ -21,17 +21,13 @@ const getTable = function (id) {
     err.name = 'MalformedArgumentError';
     throw err;
   }
-  const matches = tableMap.filter(elem => elem.id === id);
-  const obj = matches[0];
+  const obj = map[id];
   if (!obj ) {
     const msg = `could not find a table for app id: '${id}'`;
     const err = new Error(msg);
     throw err;
   }
-  const project = obj.project;
-  const datasetId = obj.dataset;
-  const tableId = obj.table;
-  return `${project}.${datasetId}.${tableId}`;
+  return `${obj.project}.${obj.dataset}.${obj.table}`;
 }
 
 /**
@@ -62,7 +58,7 @@ const fetchLatestHandler = async function (req, res) {
   };
 
   try{
-    const table = getTable(options.params.app_id);
+    const table = getTable(tableMap, options.params.app_id);
     options.query = options.query.replace('@table', `\`${table}\``);
     const rows = await runBigQueryJob(options);
     return res.status(200).json(rows).send();
