@@ -1,10 +1,11 @@
 {
   "port":"3000",
   "fetchLatestQuery": {
-    "string": "SELECT * FROM @table WHERE _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)) AND event_timestamp + event_server_timestamp_offset >= @cursor",
+    "string": "../sql/fetch_latest.sql",
     "loc": "US"
   },
   "errNoId": "Please provide an app id to search against",
+  "errNoAttr": "Please provide an attribution id to filter results",
   "errNoCursor": "Please provide a Unix timestamp in ms",
   "errBadCursor": "Cursor must be a Unix timestamp in ms"
 }
