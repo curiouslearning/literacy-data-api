@@ -1,8 +1,10 @@
 {
   "port":"3000",
   "fetchLatestQuery": {
-    "string": "../sql/fetch_latest.sql",
-    "loc": "US"
+    "string": "./sql/fetch_latest.sql",
+    "loc": "US",
+    "cacheDuration": 300,
+    "MAXROWS": 1000
   },
   "errNoId": "Please provide an app id to search against",
   "errNoAttr": "Please provide an attribution id to filter results",

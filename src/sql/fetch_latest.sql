@@ -8,8 +8,8 @@ WITH
     geo.country,
     geo.region,
     geo.city,
-    device.advertising_id as app_package_name,
-    app_info.id,
+    device.advertising_id,
+    app_info.id as app_package_name,
     props.key as referral_type,
     props.value.string_value as referral_source,
     event_name,
@@ -22,7 +22,7 @@ WITH
     AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_timestamp > @cursor
     AND app_info.id = @pkg_id
-    AND props.value.string_value = @ref_id
+    AND (props.value.string_value LIKE @ref_id OR @ref_id = '')
     AND (event_name = 'GamePlay'
     OR event_name = 'SubSkills'
     OR event_name = 'TimeTracking')
