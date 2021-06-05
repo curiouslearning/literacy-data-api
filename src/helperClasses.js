@@ -1,5 +1,12 @@
 const { BigQuery } = require('@google-cloud/bigquery');
-const Memcached = require ('memcached');
+const { Memcached } = require('memcached');
+
+class MissingArgumentError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'MissingArgumentError';
+  }
+}
 
 class MalformedArgumentError extends Error {
   constructor(message) {
@@ -24,8 +31,8 @@ class BigQueryManager {
   }
 
   async start (onCompleteCallback) {
-    this.onComplete = onCompleteCallback;
-    this.bq.createQueryJob(this.queryOptions).then((response) => {
+    this.setCompleteCallback(onCompleteCallback);
+    return this.bq.createQueryJob(this.queryOptions).then((response) => {
       const job = response[0]
       this.jobId = job.id;
       if(job) {
@@ -35,6 +42,9 @@ class BigQueryManager {
         };
         job.getQueryResults(queryResultOptions, this.paginationCallback.bind(this));
       }
+    }).catch((err)=> {
+      console.error(err);
+      throw err;
     });
   }
 
@@ -42,7 +52,6 @@ class BigQueryManager {
     if (err) throw err;
     this.rows = rows;
     if(nextQuery) {
-      console.log(nextQuery);
       this.token = nextQuery.pageToken;
       if(this.onComplete) {
         this.onComplete(this.rows, this.jobId, this.token, this.allResultsFetched);
@@ -55,15 +64,25 @@ class BigQueryManager {
     }
   }
 
-  resume(onCompleteCallback) {
+  fetchNext(onCompleteCallback) {
+    if(!this.jobId || this.allResultsFetched) {
+      if(onCompleteCallback) {
+        onCompleteCallback ([], null, null, true);
+      }
+      return;
+    }
     const job = this.bq.job(this.jobId);
-    this.onComplete = onCompleteCallback;
+    this.setCompleteCallback(onCompleteCallback);
     const queryOptions = {
       maxResults: this.MAXROWS,
       autopaginate: false,
       pageToken: this.token,
     };
-    job.getQueryResults(queryOptions, this.paginationCallback.bind(this));
+    try {
+      job.getQueryResults(queryOptions, this.paginationCallback.bind(this));
+    } catch (e) {
+      throw e;
+    }
   }
 
   setCompleteCallback(callback) {
@@ -79,12 +98,21 @@ class BigQueryManager {
 
 class MemcachedManager {
   constructor(address) {
+    if(!address) {
+      throw new Error('Please provide a cache address');
+    }
     this.memcached = new Memcached(address);
   }
   createKey (prefix, params) {
+    if(typeof(prefix) !== 'string' && typeof(prefix) !== 'number') {
+      throw new Error("Keys can only be made with strings or numbers!");
+    }
     let key = `__${prefix}__`;
     for(let param in params) {
-      key += param.toString();
+      if (typeof(param) !== 'string' && typeof(param) !== 'number') {
+        throw new Error("Keys can only be made with strings or numbers!");
+      }
+      key += params[param].toString();
     }
     return key;
   }

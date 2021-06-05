@@ -1,17 +1,16 @@
 const http = require('http');
 const url = require('url');
 const express = require('express');
-const fs = require('fs');
-const { BigQuery } = require('@google-cloud/bigquery');
 const router = express.Router();
+const fs = require('fs');
 const config = require('./config');
 const tableMap = require('./tableMap');
 const {
+  MissingArgumentError,
   MalformedArgumentError,
   BigQueryManager,
   MemcachedManager,
 } = require('./helperClasses');
-const Memcached = require('memcached');
 const cacheManager = new MemcachedManager('127.0.0.1:11211');
 
 /**
@@ -34,14 +33,12 @@ const getTable = function (map, id) {
   return `${obj.project}.${obj.dataset}.${obj.table}`;
 }
 
-function sendRows(res, rows, key) {
-  let next = true;
-  if (!rows || rows.length == 0) {
+function sendRows(res, rows, nextCursor, key) {
+  if (!rows || rows.length == 0 || !nextCursor) {
     cacheManager.removeCache(key);
-    next = false;
   }
   const resObj = formatRowsToJson(rows);
-  return res.status(200).json({data: resObj, next});
+  return res.status(200).json({data: resObj, nextCursor});
 }
 
 function formatRowsToJson (rows) {
@@ -86,7 +83,7 @@ function getSource(referralString) {
   if (!referralString) return "no-source";
   const regex = /^([a-z]{1,6})(_[a-z]{1,3})?/gmi;
   const group = referralString.match(regex);
-  switch (group.tolower()) {
+  switch (group.toString().toLowerCase()) {
     case 'fb_web':
       return 'fb_web';
     case 'fb_app':
@@ -108,14 +105,14 @@ function getSource(referralString) {
 * @param{obj} req the request
 * @param{obj} res the response
 */
-router.get('/fetch_latest*', async function (req, res, next) {
+async function fetchLatestHandler (req, res, next) {
   const searchParams = req.query;
 
   if (!searchParams.app_id) {
     return res.status(400).send({msg: config.errNoId});
   } else if (!searchParams.from) {
     return res.status(400).send({msg: config.errNoCursor});
-  } else if (!searchParams.from.match(/[0-9]+/gmi)) {
+  } else if (!searchParams.from.match(/[A-Z0-9]+/gmi)) {
     return res.status(400).send({msg: config.errBadCursor});
   }
   const sql = fs.readFileSync(config.fetchLatestQuery.string).toString();
@@ -138,24 +135,26 @@ router.get('/fetch_latest*', async function (req, res, next) {
     const table = getTable(tableMap, options.params.pkg_id);
     options.query = options.query.replace('@table', `\`${table}\``);
     const keyParams = {pkg: options.params.pkg_id, cursor: options.params.cursor};
-    const key = cacheManager.createKey( 'BigQuery', keyParams);
+    let key = cacheManager.createKey( 'BigQuery', keyParams);
     const duration = config.fetchLatestQuery.cacheDuration;
     const callback = (rows, id, token, isComplete) => {
       if(!isComplete) {
         console.log(`saving job ${id} with token ${token}`);
         const val =  {jobId: id, token: token};
+        keyParams.cursor = token;
+        key = cacheManager.createKey('bigQuery', keyParams);
         cacheManager.cacheResults(key, val, duration);
       } else {
         cacheManager.removeCache(key);
       }
-      sendRows(res, rows, key);
+      sendRows(res, rows, token, key);
     };
 
     cacheManager.get(key, (err, cache) => {
       if (err) throw err;
       if (cache) {
         const bq = new BigQueryManager(options, config.fetchLatestQuery.MAXROWS, cache.jobId, cache.token);
-        bq.resume(callback);
+        bq.fetchNext(callback);
       }
       else {
         const bq = new BigQueryManager(options, config.fetchLatestQuery.MAXROWS);
@@ -165,23 +164,24 @@ router.get('/fetch_latest*', async function (req, res, next) {
   } catch (e) {
     next(e)
   }
-});
+}
 
 function apiErrorHandler(err, req, res, next) {
-  console.log(err.stack);
   if(err.name === 'MalformedArgumentError') {
     return res.status(400).send({
       msg: 'error in one or more arguments',
       err: err,
     });
   }
+  console.log(err.stack);
   return res.status(500).send({
     msg: 'The data could not be fetched',
     err: err,
   });
 }
 
-module.exports = {
-  router,
-  apiErrorHandler
-}
+module.exports = (app) => {
+    app.use('/', router);
+    router.get('/fetch_latest*', fetchLatestHandler);
+    app.use('/', apiErrorHandler);
+};
