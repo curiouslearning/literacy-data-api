@@ -2,15 +2,16 @@ const http = require('http');
 const url = require('url');
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
 const config = require('./config');
 const tableMap = require('./tableMap');
 const {
-  MissingArgumentError,
+  MissingDataError,
   MalformedArgumentError,
   BigQueryManager,
   MemcachedManager,
+  SqlLoader
 } = require('./helperClasses');
+const queryStrings = new SqlLoader(config.sqlFiles, './sql');
 const cacheManager = new MemcachedManager('127.0.0.1:11211');
 
 /**
@@ -27,7 +28,7 @@ const getTable = function (map, id) {
   const obj = map[id];
   if (!obj ) {
     const msg = `could not find a table for app id: '${id}'`;
-    const err = new Error(msg);
+    const err = new MissingDataError(msg);
     throw err;
   }
   return `${obj.project}.${obj.dataset}.${obj.table}`;
@@ -38,14 +39,12 @@ function sendRows(res, rows, nextCursor, key) {
     cacheManager.removeCache(key);
   }
   const resObj = formatRowsToJson(rows);
-  return res.status(200).json({data: resObj, nextCursor});
+  return res.status(200).json({nextCursor, data: resObj});
 }
 
 function formatRowsToJson (rows) {
-  let resObj = [];
-  if (!rows || rows.length === 0) return resObj;
-  rows.forEach((row) => {
-    resObj.push({
+  let resObj = rows.map((row) => {
+    return {
       attribution_url: row.referral_source,
       app_id: row.app_package_name,
       ordered_id: row.event_timestamp,
@@ -73,8 +72,7 @@ function formatRowsToJson (rows) {
           value_type: row.type,
         }
       }
-
-    });
+    };
   });
   return resObj;
 }
@@ -83,20 +81,12 @@ function getSource(referralString) {
   if (!referralString) return "no-source";
   const regex = /^([a-z]{1,6})(_[a-z]{1,3})?/gmi;
   const group = referralString.match(regex);
-  switch (group.toString().toLowerCase()) {
-    case 'fb_web':
-      return 'fb_web';
-    case 'fb_app':
-      return 'fb_app';
-    case 'google_web':
-      return 'google_web';
-    case 'google_app':
-      return 'google_app';
-    case 'direct':
-      return 'direct';
-    default:
-      return 'no-source';
+  let source = group.toString().toLowerCase();
+  if(config.sourceMapping[source])
+  {
+    return config.sourceMapping[source];
   }
+  return 'no-source';
 }
 
 /**
@@ -115,14 +105,14 @@ async function fetchLatestHandler (req, res, next) {
   } else if (!searchParams.from.match(/[A-Z0-9]+/gmi)) {
     return res.status(400).send({msg: config.errBadCursor});
   }
-  const sql = fs.readFileSync(config.fetchLatestQuery.string).toString();
+  const sql = queryStrings.getQueryString(config.sqlFiles.fetchLatest)
   const options = {
     query: sql,
     location: config.fetchLatestQuery.loc,
     params: {
       pkg_id: searchParams.app_id,
       ref_id: searchParams.attribution_id || '',
-      cursor: Number(searchParams.from),
+      cursor: Number(searchParams.from) * 1000000, //convert to micros
     },
     types: {
       pkg_id: 'STRING',
@@ -134,30 +124,31 @@ async function fetchLatestHandler (req, res, next) {
   try{
     const table = getTable(tableMap, options.params.pkg_id);
     options.query = options.query.replace('@table', `\`${table}\``);
-    const keyParams = {pkg: options.params.pkg_id, cursor: options.params.cursor};
-    let key = cacheManager.createKey( 'BigQuery', keyParams);
+    const keyParams = {pkg: searchParams.app_id, cursor: searchParams.from};
+    let key = cacheManager.createKey( 'bigquery', keyParams);
     const duration = config.fetchLatestQuery.cacheDuration;
+    const maxRows = config.fetchLatestQuery.MAXROWS;
     const callback = (rows, id, token, isComplete) => {
       if(!isComplete) {
         console.log(`saving job ${id} with token ${token}`);
         const val =  {jobId: id, token: token};
         keyParams.cursor = token;
-        key = cacheManager.createKey('bigQuery', keyParams);
+        key = cacheManager.createKey('bigquery', keyParams);
         cacheManager.cacheResults(key, val, duration);
       } else {
         cacheManager.removeCache(key);
       }
       sendRows(res, rows, token, key);
     };
-
+    console.log('trying key ' + key);
     cacheManager.get(key, (err, cache) => {
       if (err) throw err;
       if (cache) {
-        const bq = new BigQueryManager(options, config.fetchLatestQuery.MAXROWS, cache.jobId, cache.token);
+        const bq = new BigQueryManager(options, maxRows, cache.jobId, cache.token);
         bq.fetchNext(callback);
       }
       else {
-        const bq = new BigQueryManager(options, config.fetchLatestQuery.MAXROWS);
+        const bq = new BigQueryManager(options, maxRows);
         bq.start(callback);
       }
     });
@@ -170,6 +161,12 @@ function apiErrorHandler(err, req, res, next) {
   if(err.name === 'MalformedArgumentError') {
     return res.status(400).send({
       msg: 'error in one or more arguments',
+      err: err,
+    });
+  }
+  if(err.name === 'MissingDataError') {
+    return res.status(404).send({
+      msg: 'Not Found',
       err: err,
     });
   }

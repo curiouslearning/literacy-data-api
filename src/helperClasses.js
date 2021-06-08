@@ -1,10 +1,11 @@
 const { BigQuery } = require('@google-cloud/bigquery');
-const { Memcached } = require('memcached');
+const  Memcached = require('memcached');
+const fs = require('fs');
 
-class MissingArgumentError extends Error {
+class MissingDataError extends Error {
   constructor(message) {
     super(message)
-    this.name = 'MissingArgumentError';
+    this.name = 'MissingDataError';
   }
 }
 
@@ -143,8 +144,61 @@ class MemcachedManager {
   }
 }
 
+class SqlLoader {
+  constructor (paths, basePath = '.', encoding = 'utf-8') {
+    if(!paths) {
+      throw new Error('you must provide an array or map of paths to sql files');
+    }
+    this.basePath = basePath;
+    this.fileStrings = {};
+    this.encoding = encoding;
+    this.loadPaths(paths);
+  }
+
+  loadPaths(paths) {
+    if(Array.isArray(paths)) {
+      this.loadPathsFromArray(paths);
+    } else if (typeof(paths) === 'object') {
+      this.loadPathsFromMap(paths);
+    }
+  }
+
+  loadPathsFromArray(paths) {
+    try {
+      paths.forEach((path) => {
+        const filePath = `${this.basePath}/${path}`;
+        const file = fs.readFileSync(filePath, this.encoding);
+        this.fileStrings[path] = file.toString();
+      });
+    } catch (e) {
+      console.error('error loading one or more sql files');
+      throw e;
+    }
+  }
+
+  loadPathsFromMap(paths) {
+    try {
+      for (let path in paths) {
+        const filePath = `${this.basePath}/${paths[path]}`;
+        const file = fs.readFileSync(filePath, this.encoding);
+        this.fileStrings[paths[path]] = file.toString();
+      }
+    } catch (e) {
+      console.error('error loading one or more sql files');
+      throw e
+    }
+  }
+
+  getQueryString(path) {
+    if(!this.fileStrings[path]) throw new Error(`no query for path ${path}!`);
+    return this.fileStrings[path];
+  }
+}
+
 module.exports = {
+  MissingDataError,
   MalformedArgumentError,
   BigQueryManager,
-  MemcachedManager
+  MemcachedManager,
+  SqlLoader
 };

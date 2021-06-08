@@ -6,7 +6,7 @@ const sandbox = sinon.createSandbox();
 const queryResults = require('./fixtures/queryResults.json');
 
 describe('Literacy API Routes', () => {
-  let app, request, cacheManager, bqManager;
+  let app, request, cacheManager, bqManager, sqlLoader;
   let pkgId, attrId, from, queryOptions;
   let resultSet, jobId, token;
   let api;
@@ -40,14 +40,14 @@ describe('Literacy API Routes', () => {
       getOptions: sandbox.stub().returns(queryOptions),
       isComplete: sandbox.stub().returns(false),
     };
-
-   api = proxyquire('../src/api', {
+    sqlLoader = {
+      getQueryString: sandbox.stub().returns('fake-query-string'),
+    }
+    api = proxyquire('../src/api', {
       './helperClasses': {
         MemcachedManager: sinon.stub().callsFake(() => {return cacheManager;}),
         BigQueryManager: sinon.stub().callsFake(()=> {return bqManager;}),
-      },
-      'fs': {
-        readFileSync: sinon.stub().callsFake(() => { return 'fake-query-string';}),
+        SqlLoader: sinon.stub().callsFake(()=> {return sqlLoader;}),
       },
     });
     app = express();
@@ -140,7 +140,7 @@ describe('Literacy API Routes', () => {
           res.status.should.equal(00);
         }).end(done);
   });
-  it('we receive a 400 error if we submit an improperly formatted ad id', (done) => {
+  it('we receive a 400 error if we submit an improperly formatted app id', (done) => {
     request
         .get('/fetch_latest')
         .query({
@@ -185,88 +185,8 @@ describe('Literacy API Routes', () => {
         }).end(done);
   });
   it('the data we receive are properly formatted', (done) => {
-    let expected = [];
-    resultSet.forEach((row) => {
-      expected.push({
-      attribution_url: row.referral_source,
-      app_id: row.app_package_name,
-      ordered_id: row.event_timestamp,
-      user: {
-        id: row.user_pseudo_id,
-        metadata: {
-          continent: row.continent,
-          country: row.country,
-          region: row.region,
-          city: row.city,
-        },
-        ad_attribution: {
-          source: 'no-source',
-          data: {
-            advertising_id: row.advertising_id,
-          },
-        },
-        event: {
-          name: row.event_name,
-          date: row.event_date,
-          timestamp: row.event_timestamp,
-          label: row.label,
-          action: row.action,
-          value: row.value,
-          value_type: row.type,
-        }
-      }
-    });
-  });
-  request
-      .get('/fetch_latest')
-      .query({
-        app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
-        attribution_id: 'referral_source_8675309',
-        from: 0,
-      })
-      .expect(200)
-      .expect((err, res)=> {
-        if (err) throw err;
-        res.data.should.deep.equal(expected);
-        ;
-      }).end(done);
-});
-it('we receive a cursor when there is more data', (done) => {
-  request
-    .get('/fetch_latest')
-    .query({
-      app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
-      attribution_id: 'referral_source_8675309',
-      from: 0,
-    })
-    .expect(200)
-    .expect((err, res)=> {
-      if (err) throw err;
-      res.nextCursor.should.equal(token);
-      ;
-    }).end(done);
-});
-it('we receive no cursor when there is no more data', (done) => {
-  bqManager.start.callsArgWith(0, resultSet, null, null, true);
-  request
-      .get('/fetch_latest')
-      .query({
-        app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
-        attribution_id: 'referral_source_8675309',
-        from: 0,
-      })
-      .expect(200)
-      .expect((err, res)=> {
-        if (err) throw err;
-        res.next.should.equal(null);
-        ;
-      }).end(done);
-  });
-  it('we receive a second subset of data when passing the returned cursor', (done) => {
-    let secondResults = queryResults.set4
-    let expected = [];
-    secondResults.forEach((row) => {
-      expected.push({
+    let expected = resultSet.map((row)=> {
+      return {
         attribution_url: row.referral_source,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
@@ -294,7 +214,85 @@ it('we receive no cursor when there is no more data', (done) => {
             value_type: row.type,
           }
         }
-      });
+      }
+    });
+    request
+        .get('/fetch_latest')
+        .query({
+          app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
+          attribution_id: 'referral_source_8675309',
+          from: 0,
+        })
+        .expect(200)
+        .expect((err, res)=> {
+          if (err) throw err;
+          res.data.should.deep.equal(expected);
+          ;
+        }).end(done);
+  });
+  it('we receive a cursor when there is more data', (done) => {
+    request
+      .get('/fetch_latest')
+      .query({
+        app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
+        attribution_id: 'referral_source_8675309',
+        from: 0,
+      })
+      .expect(200)
+      .expect((err, res)=> {
+        if (err) throw err;
+        res.nextCursor.should.equal(token);
+        ;
+      }).end(done);
+  });
+  it('we receive no cursor when there is no more data', (done) => {
+    bqManager.start.callsArgWith(0, resultSet, null, null, true);
+    request
+        .get('/fetch_latest')
+        .query({
+          app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
+          attribution_id: 'referral_source_8675309',
+          from: 0,
+        })
+        .expect(200)
+        .expect((err, res)=> {
+          if (err) throw err;
+          res.next.should.equal(null);
+          ;
+        }).end(done);
+    });
+  it('we receive a second subset of data when passing the returned cursor', (done) => {
+    let secondResults = queryResults.set4
+    let expected = secondResults.map((row) => {
+      return {
+        attribution_url: row.referral_source,
+        app_id: row.app_package_name,
+        ordered_id: row.event_timestamp,
+        user: {
+          id: row.user_pseudo_id,
+          metadata: {
+            continent: row.continent,
+            country: row.country,
+            region: row.region,
+            city: row.city,
+          },
+          ad_attribution: {
+            source: 'no-source',
+            data: {
+              advertising_id: row.advertising_id,
+            },
+          },
+          event: {
+            name: row.event_name,
+            date: row.event_date,
+            timestamp: row.event_timestamp,
+            label: row.label,
+            action: row.action,
+            value: row.value,
+            value_type: row.type,
+          }
+        }
+      };
     });
     bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
     request

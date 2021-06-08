@@ -24,11 +24,9 @@ describe('CacheManager', () => {
   });
 
   const { MemcachedManager } = proxyquire('../src/helperClasses', {
-    'memcached': {
-      Memcached: sinon.stub().callsFake(() => {
+    'memcached': sinon.stub().callsFake(() => {
         return memcached;
       }),
-    },
   });
 
   afterEach(() => {
