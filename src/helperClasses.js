@@ -4,7 +4,7 @@ const fs = require('fs');
 
 class MissingDataError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = 'MissingDataError';
   }
 }

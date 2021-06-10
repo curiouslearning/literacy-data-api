@@ -160,19 +160,19 @@ async function fetchLatestHandler (req, res, next) {
 function apiErrorHandler(err, req, res, next) {
   if(err.name === 'MalformedArgumentError') {
     return res.status(400).send({
-      msg: 'error in one or more arguments',
+      msg: err.message,
       err: err,
     });
   }
   if(err.name === 'MissingDataError') {
     return res.status(404).send({
-      msg: 'Not Found',
+      msg: err.message,
       err: err,
     });
   }
   console.log(err.stack);
   return res.status(500).send({
-    msg: 'The data could not be fetched',
+    msg: err.message,
     err: err,
   });
 }

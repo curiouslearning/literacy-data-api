@@ -126,7 +126,7 @@ describe('Literacy API Routes', () => {
           res.status.should.equal(400);
         }).end(done);
   });
-  it('we receive a 500 error if we submit a missing ad id', (done) => {
+  it('we receive a 404 error if we submit a missing app id', (done) => {
     request
         .get('/fetch_latest')
         .query({
@@ -134,10 +134,10 @@ describe('Literacy API Routes', () => {
           attribution_id: 'referral_source_8675309',
           from: 0,
         })
-        .expect(500)
+        .expect(404)
         .expect((err, res)=> {
           if (err) throw err;
-          res.status.should.equal(00);
+          res.status.should.equal(404);
         }).end(done);
   });
   it('we receive a 400 error if we submit an improperly formatted app id', (done) => {
