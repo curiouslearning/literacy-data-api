@@ -11,7 +11,7 @@ const {
   MemcachedManager,
   SqlLoader
 } = require('./helperClasses');
-const queryStrings = new SqlLoader(config.sqlFiles, './sql');
+const queryStrings = new SqlLoader(config.sqlFiles, './src/sql');
 const cacheManager = new MemcachedManager('127.0.0.1:11211');
 
 /**
