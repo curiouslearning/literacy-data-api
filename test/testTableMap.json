@@ -1,0 +1,14 @@
+[
+    {
+      "id": "com.test.app.id",
+      "project": "test-proj",
+      "table": "test-table",
+      "dataset": "test-dataset"
+    },
+    {
+      "id": "com.wrong.app.id",
+      "project": "test-proj",
+      "table": "wrong-table",
+      "dataset": "wrong-dataset"
+    }
+  ]

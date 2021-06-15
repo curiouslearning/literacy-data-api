@@ -1,0 +1,22 @@
+{
+  "port":"3000",
+  "sqlFiles": {
+    "fetchLatest": "fetch_latest.sql"
+  },
+  "fetchLatestQuery": {
+    "loc": "US",
+    "cacheDuration": 300,
+    "MAXROWS": 1000
+  },
+  "errNoId": "Please provide an app id to search against",
+  "errNoAttr": "Please provide an attribution id to filter results",
+  "errNoCursor": "Please provide a Unix timestamp in ms",
+  "errBadCursor": "Cursor must be a Unix timestamp in ms",
+  "sourceMapping": {
+    "fb_web": "fb_web",
+    "fb_app": "fb_app",
+    "google_web": "google_web",
+    "google_app": "google_app",
+    "direct": "direct"
+  }
+}
