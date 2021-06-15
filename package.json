@@ -28,6 +28,9 @@
     "express": "^4.17.1",
     "memcached": "^2.2.2"
   },
+  "optionalDependencies": {
+    "fsevents": "2.x.x"
+  },
   "devDependencies": {
     "bluebird": "^3.7.2",
     "chai": "^4.3.4",
