@@ -12,7 +12,9 @@ const {
   SqlLoader
 } = require('./helperClasses');
 const queryStrings = new SqlLoader(config.sqlFiles, './src/sql');
-const cacheManager = new MemcachedManager('127.0.0.1:11211');
+const dns = process.env.MEMCACHE_DNS;
+const port = process.env.MEMCACHE_PORT;
+const cacheManager = new MemcachedManager(`${dns}:${port}`);
 
 /**
 * returns the table containing records from the given app id

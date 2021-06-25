@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "literacy-data-api.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "literacy-data-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: {{ .Values.protocol }}
+      nodePort: {{ .Values.service.nodePort }}
+      name: {{ .Values.portName }}
+  selector:
+    {{- include "literacy-data-api.selectorLabels" . | nindent 4 }}

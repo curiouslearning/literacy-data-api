@@ -1,0 +1,78 @@
+# Default values for literacy-data-api.
+# This is a YAML-formatted file.
+
+import-values:
+  child: service
+  parent: myimports
+
+replicaCount: 3
+
+tags:
+  memcached: true
+
+image:
+  repository: etondreau/literacy-data-api
+  pullPolicy: IfNotPresent
+  env:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: "/app/var/secrets/keys/bigquery-serviceaccount.json"
+    - name: MEMCACHE_DNS
+      value: "lit-data-memcached"
+    - name: MEMCACHE_PORT
+      value: "11211"
+  volumeMounts:
+    - name: keys
+      readOnly: true
+      mountPath: "/app/var/secrets/keys"
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: "api"
+fullnameOverride: ""
+
+volumes:
+  - name: keys
+    secret:
+      secretName: bigquery-serviceaccount
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  targetPort: 3000
+protocol: TCP
+portName: apiport
+port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: lit-data.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

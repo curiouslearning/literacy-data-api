@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "literacy-data-api.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "literacy-data-api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "literacy-data-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "literacy-data-api.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        {{- range .Values.volumes }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secret.secretName }}
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- range .Values.image.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote}}
+            {{- end}}
+          volumeMounts:
+            {{- range .Values.image.volumeMounts }}
+            - name: {{ .name | quote }}
+              readOnly: {{ .readOnly }}
+              mountPath: {{ .mountPath | quote }}
+            {{- end }}
+          ports:
+            - name: {{ .Values.portName }}
+              containerPort: {{ .Values.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

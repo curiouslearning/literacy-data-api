@@ -1,0 +1,20 @@
+apiVersion: v1
+entries:
+  literacy-data-api:
+  - apiVersion: v2
+    appVersion: v0.0.1
+    created: "2021-06-25T16:00:27.748677-04:00"
+    dependencies:
+    - name: memcached
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - memcached
+      version: ~5.13.0
+    description: A simple API for fetching literacy data
+    digest: eb96f3c9137db5ae85b7ad8ac2d46204124260bf00255bc4e4466f37b02f4d0a
+    name: literacy-data-api
+    type: application
+    urls:
+    - literacy-data-api-0.0.1.tgz
+    version: 0.0.1
+generated: "2021-06-25T16:00:27.3290109-04:00"
