@@ -28,5 +28,6 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: install dependencies and run unit tests
         run: |
+          cd api
           npm i
           npm run test
