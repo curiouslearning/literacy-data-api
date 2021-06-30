@@ -26,7 +26,8 @@
   "dependencies": {
     "@google-cloud/bigquery": "^5.6.0",
     "express": "^4.17.1",
-    "memcached": "^2.2.2"
+    "memcached": "^2.2.2",
+    "mustache": "^4.2.0"
   },
   "optionalDependencies": {
     "fsevents": "2.x.x"
