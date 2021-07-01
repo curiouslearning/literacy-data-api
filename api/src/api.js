@@ -2,7 +2,7 @@ const http = require('http');
 const url = require('url');
 const express = require('express');
 const router = express.Router();
-const Mustache = require('mustache');
+const mustache = require('mustache');
 const config = require('./config');
 const tableMap = require('./tableMap');
 const {
@@ -127,7 +127,6 @@ async function fetchLatestHandler (req, res, next) {
   try{
     const table = getTable(tableMap, options.params.pkg_id);
     options.query = mustache.render(options.query, table);
-    options.query = options.query.replace('@table', `\`${table}\``);
     const keyParams = {pkg: searchParams.app_id, cursor: searchParams.from};
     let key = cacheManager.createKey( 'bigquery', keyParams);
     const duration = config.fetchLatestQuery.cacheDuration;
