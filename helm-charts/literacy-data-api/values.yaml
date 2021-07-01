@@ -9,10 +9,7 @@ replicaCount: 3
 
 tags:
   memcached: true
-
-image:
-  repository: etondreau/literacy-data-api
-  pullPolicy: IfNotPresent
+container:
   env:
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: "/app/var/secrets/keys/bigquery-serviceaccount.json"
@@ -24,6 +21,9 @@ image:
     - name: keys
       readOnly: true
       mountPath: "/app/var/secrets/keys"
+image:
+  repository: etondreau/literacy-data-api
+  pullPolicy: IfNotPresent
   tag: ""
 
 imagePullSecrets: []
@@ -48,9 +48,9 @@ securityContext: {}
 service:
   type: ClusterIP
   targetPort: 3000
-protocol: TCP
-portName: apiport
-port: 3000
+  protocol: TCP
+  portName: apiport
+  port: 3000
 
 ingress:
   enabled: false

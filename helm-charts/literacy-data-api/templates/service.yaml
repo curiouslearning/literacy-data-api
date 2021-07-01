@@ -8,10 +8,10 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.port }}
+    - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
-      protocol: {{ .Values.protocol }}
+      protocol: {{ .Values.service.protocol }}
       nodePort: {{ .Values.service.nodePort }}
-      name: {{ .Values.portName }}
+      name: {{ .Values.service.portName }}
   selector:
     {{- include "literacy-data-api.selectorLabels" . | nindent 4 }}
