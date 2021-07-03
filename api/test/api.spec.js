@@ -257,7 +257,7 @@ describe('Literacy API Routes', () => {
         .expect(200)
         .expect((err, res)=> {
           if (err) throw err;
-          res.next.should.equal(null);
+          res.nextCursor.should.equal(null);
           ;
         }).end(done);
     });
@@ -311,7 +311,7 @@ describe('Literacy API Routes', () => {
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.cursor,
+            from: res.nextCursor,
           })
           .expect(200)
           .expect((err, final) => {
@@ -320,4 +320,63 @@ describe('Literacy API Routes', () => {
           });
       }).end(done);
   });
+  it('we do not receive the same cursor when submitting a returned cursor', (done) => {
+    let secondResults = queryResults.set4
+    let expected = secondResults.map((row) => {
+      return {
+        attribution_url: row.referral_source,
+        app_id: row.app_package_name,
+        ordered_id: row.event_timestamp,
+        user: {
+          id: row.user_pseudo_id,
+          metadata: {
+            continent: row.continent,
+            country: row.country,
+            region: row.region,
+            city: row.city,
+          },
+          ad_attribution: {
+            source: 'no-source',
+            data: {
+              advertising_id: row.advertising_id,
+            },
+          },
+          event: {
+            name: row.event_name,
+            date: row.event_date,
+            timestamp: row.event_timestamp,
+            label: row.label,
+            action: row.action,
+            value: row.value,
+            value_type: row.type,
+          }
+        }
+      };
+    });
+    bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
+    request
+      .get('/fetch_latest')
+      .query({
+        app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
+        attribution_id: 'referral_source_8675309',
+        from: 0,
+      })
+      .expect(200)
+      .expect((err, res)=> {
+        if (err) throw err;
+        console.log(`cursor: ${res.nextCursor}`)
+        return request
+          .get('/fetch_latest')
+          .query({
+            app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
+            attribution_id: 'referral_source_8675309',
+            from: res.nextCursor,
+          })
+          .expect(200)
+          .expect((err, final) => {
+            if (err) throw err;
+            final.nextCursor.should.equal(null);
+          });
+      }).end(done);
+  })
 });

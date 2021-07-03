@@ -15,7 +15,7 @@ WITH
     event_name,
     event_params
   FROM
-    @table,
+    {{table}},
     UNNEST(user_properties) as props
   WHERE
     _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY))

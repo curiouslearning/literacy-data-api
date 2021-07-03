@@ -102,6 +102,7 @@ class MemcachedManager {
     if(!address) {
       throw new Error('Please provide a cache address');
     }
+  console.log(`memcached endpoint: ${address}`);
     this.memcached = new Memcached(address);
   }
   createKey (prefix, params) {

@@ -2,6 +2,7 @@ const http = require('http');
 const url = require('url');
 const express = require('express');
 const router = express.Router();
+const mustache = require('mustache');
 const config = require('./config');
 const tableMap = require('./tableMap');
 const {
@@ -11,8 +12,10 @@ const {
   MemcachedManager,
   SqlLoader
 } = require('./helperClasses');
-const queryStrings = new SqlLoader(config.sqlFiles, './sql');
-const cacheManager = new MemcachedManager('127.0.0.1:11211');
+const queryStrings = new SqlLoader(config.sqlFiles, './src/sql');
+const dns = process.env.MEMCACHE_DNS;
+const port = process.env.MEMCACHE_PORT;
+const cacheManager = new MemcachedManager(`${dns}:${port}`);
 
 /**
 * returns the table containing records from the given app id
@@ -123,7 +126,7 @@ async function fetchLatestHandler (req, res, next) {
 
   try{
     const table = getTable(tableMap, options.params.pkg_id);
-    options.query = options.query.replace('@table', `\`${table}\``);
+    options.query = mustache.render(options.query, table);
     const keyParams = {pkg: searchParams.app_id, cursor: searchParams.from};
     let key = cacheManager.createKey( 'bigquery', keyParams);
     const duration = config.fetchLatestQuery.cacheDuration;
