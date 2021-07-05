@@ -21,4 +21,4 @@
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
 {{- end }}
 
-2. In order to successfully access BigQuery, you need to provide a secret for {{ (index .Values.image.env 0).name | quote }}. The secret should be named {{ (index .Values.volumes 0).secret.secretName | quote }} and point to {{ (index .Values.image.env 0).value | quote }}. Once that is secret is created, delete the pods from kubectl to restart the deployment.
+2. In order to successfully access BigQuery, you need to provide a secret for {{ (index .Values.container.env 0).name | quote }}. The secret should be named {{ (index .Values.volumes 0).secret.secretName | quote }} and point to {{ (index .Values.container.env 0).value | quote }}. Once that is secret is created, delete the pods from kubectl to restart the deployment.
