@@ -35,11 +35,7 @@ describe('BigQueryManager', () => {
       maxResults: maxRows,
       autopaginate: false,
       pageToken: token}, {msg: 'fake-api-response'});
-    job.getQueryResults.onCall(1).callsArgWith(1, null, queryResults.set2, {
-      maxResults: maxRows,
-      autopaginate: false,
-      pageToken: undefined,
-    }, {msg:'fake-api-response'});
+    job.getQueryResults.onCall(1).callsArgWith(1, null, queryResults.set2, null, {msg:'fake-api-response'});
     bigQuery = {
       createQueryJob: sandbox.stub().resolves([job, {msg: 'fake-api-response'}]),
       job: sandbox.stub().returns(job),
@@ -162,5 +158,5 @@ describe('BigQueryManager', () => {
       }
     };
     test.start(callback)
-  })
+  });
 });
