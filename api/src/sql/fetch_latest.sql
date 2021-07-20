@@ -13,12 +13,13 @@ WITH
     props.key as referral_type,
     props.value.string_value as referral_source,
     event_name,
-    event_params
+    event_params,
+    user_properties
   FROM
     `{{table}}`,
     UNNEST(user_properties) as props
   WHERE
-    _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY))
+    _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL @range DAY))
     AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_timestamp > @cursor
     AND app_info.id = @pkg_id
@@ -62,7 +63,12 @@ INT_VALS AS (
   SELECT
     * EXCEPT (event_params, key, value),
     CAST(params.value.int_value AS STRING) as value,
-    "continuous" as type
+    CAST(
+      CASE
+        WHEN params.value.int_value = 0
+          THEN "discrete"
+        ELSE "continuous"
+    ) as type
   FROM
     PARSED_ACTION,
     UNNEST(event_params) as params
@@ -101,4 +107,4 @@ FROM STRING_VALS
 UNION ALL (SELECT * FROM INT_VALS)
 UNION ALL (SELECT * FROM FLOAT_VALS)
 UNION ALL (SELECT * FROM DOUBLE_VALS)
-ORDER BY event_timestamp DESC
+ORDER BY event_timestamp ASC
