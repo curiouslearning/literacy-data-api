@@ -73,7 +73,9 @@ class BigQueryManager {
       return;
     }
     const job = this.bq.job(this.jobId);
-    this.setCompleteCallback(onCompleteCallback);
+    if(onCompleteCallback) {
+      this.setCompleteCallback(onCompleteCallback);
+    }
     const queryOptions = {
       maxResults: this.MAXROWS,
       autopaginate: false,

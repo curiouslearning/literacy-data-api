@@ -35,11 +35,7 @@ describe('BigQueryManager', () => {
       maxResults: maxRows,
       autopaginate: false,
       pageToken: token}, {msg: 'fake-api-response'});
-    job.getQueryResults.onCall(1).callsArgWith(1, null, queryResults.set2, {
-      maxResults: maxRows,
-      autopaginate: false,
-      pageToken: undefined,
-    }, {msg:'fake-api-response'});
+    job.getQueryResults.onCall(1).callsArgWith(1, null, queryResults.set2, null, {msg:'fake-api-response'});
     bigQuery = {
       createQueryJob: sandbox.stub().resolves([job, {msg: 'fake-api-response'}]),
       job: sandbox.stub().returns(job),
@@ -120,7 +116,7 @@ describe('BigQueryManager', () => {
       test.fetchNext();
       bigQuery.job.should.have.been.calledWith(jobId);
     } catch (e) {
-      e.should.equal(null);
+      should.not.exist(e);
     }
   })
   it('should not start a new job if a jobId is present', () => {
@@ -151,15 +147,16 @@ describe('BigQueryManager', () => {
     callback.should.have.been.calledWith([], null, null, true);
   });
 
-  it('should fetch the next set of results', () => {
+  it('should fetch the next set of results', (done) => {
     const test = new BigQueryManager(queryOptions, maxRows);
     const callback = (rows, jobId, token, isComplete) => {
       if (isComplete) {
         rows.should.deep.equal(queryResults.set2);
+        done();
       } else {
         test.fetchNext();
       }
     };
     test.start(callback)
-  })
+  });
 });

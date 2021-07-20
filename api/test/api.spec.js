@@ -80,12 +80,7 @@ describe('Literacy API Routes', () => {
         })
         .expect('Content-Type', /json/)
         .expect(200)
-        .expect((err, res)=> {
-          if(err) throw err;
-          console.log('res data: ');
-          console.log(res.data);
-          res.status.should.equal(200);
-        }).end(done);
+        .end(done);
   });
   it('we can successfully omit the referral id if desired', (done) => {
     request
@@ -95,10 +90,7 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(200)
-        .expect((err, res)=> {
-          if(err) throw err;
-          res.status.should.equal(200);
-        }).end(done);
+        .end(done);
       });
   it('we receive a 400 error if we omit the app id', (done) => {
     request
@@ -108,10 +100,7 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(400)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(400);
-        }).end(done);
+        .end(done);
   });
   it('we receive a 400 error if we omit the cursor', (done) => {
     request
@@ -121,10 +110,7 @@ describe('Literacy API Routes', () => {
           attribution_id: 'referral_source_8675309',
         })
         .expect(400)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(400);
-        }).end(done);
+        .end(done);
   });
   it('we receive a 404 error if we submit a missing app id', (done) => {
     request
@@ -135,10 +121,7 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(404)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(404);
-        }).end(done);
+        .end(done);
   });
   it('we receive a 400 error if we submit an improperly formatted app id', (done) => {
     request
@@ -149,10 +132,7 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(400)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(400);
-        }).end(done);
+        .end(done);
   });
   it('we receive a 400 error if we submit an improperly formatted cursor', (done) => {
     request
@@ -163,10 +143,7 @@ describe('Literacy API Routes', () => {
           from: 'A75A&FD569^&',
         })
         .expect(400)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(400);
-        }).end(done);
+        .end(done);
 
   });
   it('we receive a 500 error if BigQuery fails to fetch data', (done) => {
@@ -179,10 +156,7 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(500)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.status.should.equal(500);
-        }).end(done);
+        .end(done);
   });
   it('the data we receive are properly formatted', (done) => {
     let expected = resultSet.map((row)=> {
@@ -224,11 +198,11 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(200)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.data.should.deep.equal(expected);
-          ;
-        }).end(done);
+        .end((err, res)=> {
+          if (err) return done(err);
+          res.body.data.should.deep.equal(expected);
+          done();
+        })
   });
   it('we receive a cursor when there is more data', (done) => {
     request
@@ -239,11 +213,11 @@ describe('Literacy API Routes', () => {
         from: 0,
       })
       .expect(200)
-      .expect((err, res)=> {
-        if (err) throw err;
-        res.nextCursor.should.equal(token);
-        ;
-      }).end(done);
+      .end((err, res)=> {
+        if (err) return done(err);
+        res.body.nextCursor.should.equal(token);
+        done();
+      })
   });
   it('we receive no cursor when there is no more data', (done) => {
     bqManager.start.callsArgWith(0, resultSet, null, null, true);
@@ -255,12 +229,13 @@ describe('Literacy API Routes', () => {
           from: 0,
         })
         .expect(200)
-        .expect((err, res)=> {
-          if (err) throw err;
-          res.nextCursor.should.equal(null);
-          ;
-        }).end(done);
+        .end((err, res)=> {
+          if (err) return done(err);
+          should.equal(res.body.nextCursor, null);
+          done();
+        })
     });
+
   it('we receive a second subset of data when passing the returned cursor', (done) => {
     let secondResults = queryResults.set4
     let expected = secondResults.map((row) => {
@@ -303,22 +278,24 @@ describe('Literacy API Routes', () => {
         from: 0,
       })
       .expect(200)
-      .expect((err, res)=> {
-        if (err) throw err;
-        console.log(`cursor: ${res.nextCursor}`)
-        return request
+      .end((err, res)=> {
+        if (err) return done(err);
+
+        request
           .get('/fetch_latest')
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.nextCursor,
+            from: res.body.nextCursor,
           })
           .expect(200)
-          .expect((err, final) => {
-            if (err) throw err;
-            final.data.should.deep.equal(expected);
+          .end((err, fi) => {
+            if (err) return done(err);
+
+            fi.body.data.should.deep.equal(expected);
+            done();
           });
-      }).end(done);
+      });
   });
   it('we do not receive the same cursor when submitting a returned cursor', (done) => {
     let secondResults = queryResults.set4
@@ -362,21 +339,24 @@ describe('Literacy API Routes', () => {
         from: 0,
       })
       .expect(200)
-      .expect((err, res)=> {
-        if (err) throw err;
-        console.log(`cursor: ${res.nextCursor}`)
-        return request
+      .end((err, res)=> {
+        if (err) return done(err);
+
+        console.log(`cursor: ${res.body.nextCursor}`)
+        request
           .get('/fetch_latest')
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.nextCursor,
+            from: res.body.nextCursor,
           })
           .expect(200)
-          .expect((err, final) => {
-            if (err) throw err;
-            final.nextCursor.should.equal(null);
+          .end((err, fi) => {
+            if (err) return done(err);
+
+            should.equal(fi.body.nextCursor, null);
+            done();
           });
-      }).end(done);
+      })
   })
 });
