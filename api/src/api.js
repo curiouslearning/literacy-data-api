@@ -17,12 +17,13 @@ const dns = process.env.MEMCACHE_DNS;
 const port = process.env.MEMCACHE_PORT;
 const cacheManager = new MemcachedManager(`${dns}:${port}`);
 
+const DAYINSECONDS = 86400;
 /**
 * returns the table containing records from the given app id
 * @param{string} id the app id
 * @returns{string} the table name in SQL table format
 */
-const getTable = function (map, id) {
+const getTable = function (map, id, getHistoric) {
   const regex = /(^[a-z]{2,3})([\.][a-z0-9]*)+$/gmi;
   if (!id.match(regex)) {
     const msg = `cannot parse app id: '${id}'. Check formatting and try again`;
@@ -65,16 +66,16 @@ function formatRowsToJson (rows) {
             advertising_id: row.advertising_id,
           },
         },
-        event: {
-          name: row.event_name,
-          date: row.event_date,
-          timestamp: row.event_timestamp,
-          label: row.label,
-          action: row.action,
-          value: row.value,
-          value_type: row.type,
-        }
-      }
+        properties: row.user_properties,
+      },
+      event: {
+        name: row.event_name,
+        date: row.event_date,
+        timestamp: row.event_timestamp,
+        key: `${row.action} - ${row.label}`,
+        value: row.value,
+        value_type: row.type,
+      },
     };
   });
   return resObj;
@@ -116,11 +117,14 @@ async function fetchLatestHandler (req, res, next) {
       pkg_id: searchParams.app_id,
       ref_id: searchParams.attribution_id || '',
       cursor: Number(searchParams.from) * 1000000, //convert to micros
+      //only search back as far as we need to
+      range:  Math.ceil((Date.now() - searchParams.from)/DAYINSECONDS),
     },
     types: {
       pkg_id: 'STRING',
       ref_id: 'STRING',
       cursor: 'INT64',
+      range: 'INT64',
     },
   };
 

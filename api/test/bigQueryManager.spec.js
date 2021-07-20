@@ -19,7 +19,8 @@ describe('BigQueryManager', () => {
       params: {
         pkg_id: 'fake-pkg',
         ref_id: 'fake-ref-source',
-        cursor: 123456789000000
+        cursor: 123456789000000,
+        range: Math.ceil((Date.now() - 123456789)/86400),
       },
       types: {
         pkg_id: 'STRING',

@@ -173,21 +173,21 @@ describe('Literacy API Routes', () => {
             city: row.city,
           },
           ad_attribution: {
-            source: 'no-source',
+            source: "no-source",
             data: {
               advertising_id: row.advertising_id,
             },
           },
-          event: {
-            name: row.event_name,
-            date: row.event_date,
-            timestamp: row.event_timestamp,
-            label: row.label,
-            action: row.action,
-            value: row.value,
-            value_type: row.type,
-          }
-        }
+          properties: row.user_properties,
+        },
+        event: {
+          name: row.event_name,
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          key: `${row.action} - ${row.label}`,
+          value: row.value,
+          value_type: row.type,
+        },
       }
     });
     request
@@ -257,16 +257,16 @@ describe('Literacy API Routes', () => {
               advertising_id: row.advertising_id,
             },
           },
-          event: {
-            name: row.event_name,
-            date: row.event_date,
-            timestamp: row.event_timestamp,
-            label: row.label,
-            action: row.action,
-            value: row.value,
-            value_type: row.type,
-          }
-        }
+          properties: row.user_properties,
+        },
+        event: {
+          name: row.event_name,
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          key: `${row.action} - ${row.label}`,
+          value: row.value,
+          value_type: row.type,
+        },
       };
     });
     bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
