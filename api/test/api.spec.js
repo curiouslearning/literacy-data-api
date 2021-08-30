@@ -178,15 +178,14 @@ describe('Literacy API Routes', () => {
               advertising_id: row.advertising_id,
             },
           },
-          event: {
-            name: row.event_name,
-            date: row.event_date,
-            timestamp: row.event_timestamp,
-            label: row.label,
-            action: row.action,
-            value: row.value,
-            value_type: row.type,
-          }
+        },
+        event: {
+          name: row.event_name,
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          key: `${row.action} - ${row.label}`,
+          value: row.value,
+          value_type: row.type,
         }
       }
     });
@@ -257,15 +256,14 @@ describe('Literacy API Routes', () => {
               advertising_id: row.advertising_id,
             },
           },
-          event: {
-            name: row.event_name,
-            date: row.event_date,
-            timestamp: row.event_timestamp,
-            label: row.label,
-            action: row.action,
-            value: row.value,
-            value_type: row.type,
-          }
+        },
+        event: {
+          name: row.event_name,
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          key: `${row.action} - ${row.label}`,
+          value: row.value,
+          value_type: row.type,
         }
       };
     });
@@ -318,15 +316,14 @@ describe('Literacy API Routes', () => {
               advertising_id: row.advertising_id,
             },
           },
-          event: {
-            name: row.event_name,
-            date: row.event_date,
-            timestamp: row.event_timestamp,
-            label: row.label,
-            action: row.action,
-            value: row.value,
-            value_type: row.type,
-          }
+        },
+        event: {
+          name: row.event_name,
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          key: `${row.action} - ${row.label}`,
+          value: row.value,
+          value_type: row.type,
         }
       };
     });
