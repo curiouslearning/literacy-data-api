@@ -68,6 +68,7 @@ INT_VALS AS (
         WHEN params.value.int_value = 0
           THEN "discrete"
         ELSE "continuous"
+      END
     ) as type
   FROM
     PARSED_ACTION,
