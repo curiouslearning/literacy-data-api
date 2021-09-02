@@ -33,15 +33,16 @@ class BigQueryManager {
 
   async start (onCompleteCallback) {
     this.setCompleteCallback(onCompleteCallback);
-    return this.bq.createQueryJob(this.queryOptions).then((response) => {
+    this.bq.createQueryJob(this.queryOptions).then((response) => {
       const job = response[0]
       this.jobId = job.id;
       if(job) {
         const queryResultOptions = {
           maxResults: this.MAXROWS,
           autopaginate: false,
+          timeoutMs: 60000
         };
-        job.getQueryResults(queryResultOptions, this.paginationCallback.bind(this));
+        return job.getQueryResults(queryResultOptions, this.paginationCallback.bind(this));
       }
     }).catch((err)=> {
       console.error(err);
@@ -113,11 +114,13 @@ class MemcachedManager {
     }
     let key = `__${prefix}__`;
     for(let param in params) {
-      if (typeof(param) !== 'string' && typeof(param) !== 'number') {
-        throw new Error("Keys can only be made with strings or numbers!");
+      if (params[param]) {
+        if (typeof(param) !== 'string' && typeof(param) !== 'number') {
+          throw new Error("Keys can only be made with strings or numbers!");
+        }
+        key += params[param].toString();
       }
-      key += params[param].toString();
-    }
+          }
     return key;
   }
   cacheResults (key, data, duration) {

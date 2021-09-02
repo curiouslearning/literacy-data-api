@@ -86,6 +86,7 @@ describe('BigQueryManager', () => {
     job.getQueryResults.should.have.been.calledWith({
       maxResults: maxRows,
       autopaginate: false,
+      timeoutMs: 60000
     }, sinon.match.func);
   });
   it('should call the pagination callback after a new job is complete', async ()=> {
