@@ -85,10 +85,12 @@ function getSource(referralString) {
   if (!referralString) return "no-source";
   const regex = /^([a-z]{1,6})(_[a-z]{1,3})?/gmi;
   const group = referralString.match(regex);
-  let source = group.toString().toLowerCase();
-  if(config.sourceMapping[source])
-  {
-    return config.sourceMapping[source];
+  if(group){
+    let source = group.toString().toLowerCase();
+    if(config.sourceMapping[source])
+    {
+      return config.sourceMapping[source];
+    }
   }
   return 'no-source';
 }
