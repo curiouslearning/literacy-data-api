@@ -21,6 +21,7 @@ containerdConfigPatches:
     endpoint = ["http://${reg_name}:${reg_port}"]
 EOF
 
+kubectl create secret generic bigquery-serviceaccount --from-file=../api/keys
 # connect the registry to the cluster network
 # (the network may already be connected)
 docker network connect "kind" "${reg_name}" || true
