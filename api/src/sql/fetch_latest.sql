@@ -63,7 +63,7 @@ INT_VALS AS (
   SELECT
     * EXCEPT (event_params, key, value),
     CAST(params.value.int_value AS STRING) as value,
-    CAST(
+    (
       CASE
         WHEN params.value.int_value = 0
           THEN "discrete"

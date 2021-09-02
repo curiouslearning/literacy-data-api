@@ -118,7 +118,7 @@ async function fetchLatestHandler (req, res, next) {
       ref_id: searchParams.attribution_id || '',
       cursor: Number(searchParams.from) * 1000000, //convert to micros
       //only search back as far as we need to
-      range:  Math.ceil((Date.now() - searchParams.from)/DAYINSECONDS),
+      range:  Math.ceil(((Date.now()/1000) - searchParams.from)/DAYINSECONDS),
     },
     types: {
       pkg_id: 'STRING',
