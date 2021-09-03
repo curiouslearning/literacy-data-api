@@ -108,8 +108,8 @@ async function fetchLatestHandler (req, res, next) {
     return res.status(400).send({msg: config.errNoId});
   } else if (!searchParams.from) {
     return res.status(400).send({msg: config.errNoCursor});
-  } else if (!searchParams.from.match(/[A-Z0-9]+/gmi)) {
-    return res.status(400).send({msg: config.errBadCursor});
+  } else if (!searchParams.from.match(/[0-9]{10}/gmi)) {
+    return res.status(400).send({msg: config.errBadTimestamp});
   }
   const sql = queryStrings.getQueryString(config.sqlFiles.fetchLatest)
   const options = {
@@ -133,7 +133,7 @@ async function fetchLatestHandler (req, res, next) {
   try{
     const table = getTable(tableMap, options.params.pkg_id);
     options.query = mustache.render(options.query, {table: table});
-    const keyParams = {pkg: searchParams.app_id, cursor: searchParams.from};
+    const keyParams = {pkg: searchParams.app_id, cursor: searchParams.cursor};
     let key = cacheManager.createKey( 'bigquery', keyParams);
     const duration = config.fetchLatestQuery.cacheDuration;
     const maxRows = config.fetchLatestQuery.MAXROWS;
