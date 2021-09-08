@@ -49,7 +49,7 @@ function sendRows(res, rows, nextCursor, key) {
 function formatRowsToJson (rows) {
   let resObj = rows.map((row) => {
     return {
-      attribution_url: row.referral_source,
+      attribution_url: row.attribution_id,
       app_id: row.app_package_name,
       ordered_id: row.event_timestamp,
       user: {
@@ -61,7 +61,7 @@ function formatRowsToJson (rows) {
           city: row.city,
         },
         ad_attribution: {
-          source: getSource(row.referral_source),
+          source: getSource(row.attribution_id),
           data: {
             advertising_id: row.advertising_id,
           },
@@ -105,10 +105,10 @@ function getSource(referralString) {
 async function fetchLatestHandler (req, res, next) {
   const searchParams = req.query;
 
-  if (!searchParams.app_id) {
+  if (!searchParams.app_id) { //TODO: Edit proofreading to allow timestamp OR job hash
     return res.status(400).send({msg: config.errNoId});
   } else if (!searchParams.from) {
-    return res.status(400).send({msg: config.errNoCursor});
+    return res.status(400).send({msg: config.errNoTimestamp});
   } else if (!searchParams.from.match(/[0-9]{10}/gmi)) {
     return res.status(400).send({msg: config.errBadTimestamp});
   }
@@ -133,35 +133,29 @@ async function fetchLatestHandler (req, res, next) {
 
   try{
     const table = getTable(tableMap, options.params.pkg_id);
-    options.query = mustache.render(options.query, {table: table});
-    const keyParams = {pkg: searchParams.app_id, cursor: searchParams.cursor};
-    let key = cacheManager.createKey( 'bigquery', keyParams);
-    const duration = config.fetchLatestQuery.cacheDuration;
+    options.query = mustache.render(options.query, {table: table}); //TODO: gotta expand this for UDF project.dataset prefixes too
     const maxRows = config.fetchLatestQuery.MAXROWS;
     const callback = (rows, id, token, isComplete) => {
-      if(!isComplete) {
-        console.log(`saving job ${id} with token ${token}`);
-        const val =  {jobId: id, token: token};
-        keyParams.cursor = token;
-        key = cacheManager.createKey('bigquery', keyParams);
-        cacheManager.cacheResults(key, val, duration);
+      if(id && token) {
+        let encodeString = `${id}-${token}`;
+        const encodedToken = btoa(encodeString);
+        sendRows(res, rows, token);
       } else {
-        cacheManager.removeCache(key);
+        sendRows(res, rows, null);
       }
-      sendRows(res, rows, token, key);
     };
-    console.log('trying key ' + key);
-    cacheManager.get(key, (err, cache) => {
-      if (err) throw err;
-      if (cache) {
-        const bq = new BigQueryManager(options, maxRows, cache.jobId, cache.token);
-        bq.fetchNext(callback);
-      }
-      else {
-        const bq = new BigQueryManager(options, maxRows);
-        bq.start(callback);
-      }
-    });
+    if(searchParams.token) {
+      let decodedToken = atob(searchParams.token);
+      let params = decodedToken.split('-');
+      const job = {id: params[0], token: params[1]};
+      //TODO decode token into job id and token
+      const bq = new BigQueryManager(options, maxRows, job.id, job.token);
+      bq.fetchNext(callback);
+    }
+    else {
+      const bq = new BigQueryManager(options, maxRows);
+      bq.start(callback);
+    }
   } catch (e) {
     next(e)
   }

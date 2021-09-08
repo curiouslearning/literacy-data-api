@@ -28,20 +28,28 @@ class BigQueryStatementBuilder {
   }
 
   getVerbObject(row) {
-    //TODO: determine mapping of FTM data to ADLNet verbs
-    /* Event to Verb mapping
-    * SegmentFail: failed
-    * LevelFail: failed
-    * SegmentSuccess: completed
-    * LevelSuccess: completed
-    * Profile Select: interacted
-    * Monster Select: interacted
-    * SubSkill Increase: progressed
-    * Monster Petting: interacted
-    * Monster Petting Done: completed
-    * New Monster: experienced
-    * Monster evolve: progressed
-    */
+    let actionArray = row.action.split('_');
+    switch(actionArray[0]) {
+      case "SegmentFail":
+        return ADL.verbs.failed;
+      case "LevelFail":
+        return ADL.verbs.failed;
+      case "SegmentSuccess":
+        return ADL.verbs.completed;
+      case "LevelSuccess":
+        return ADL.verbs.completed;
+      case "MonsterPettingDone":
+        return ADL.verbs.completed;
+      case "SubSkillIncrease":
+        return ADL.verbs.progressed;
+      case "MonsterEvolve":
+        return ADL.verbs.progressed;
+      case "NewMonster":
+        return ADL.verbs.experienced;
+      default:
+        return ADL.verbs.interacted;
+
+    }
   }
 
   selectObjectType(row){

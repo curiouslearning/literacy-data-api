@@ -56,12 +56,12 @@ class BigQueryManager {
     if(nextQuery) {
       this.token = nextQuery.pageToken;
       if(this.onComplete) {
-        this.onComplete(this.rows, this.jobId, this.token, this.allResultsFetched);
+        this.onComplete(this.rows, this.jobId, this.token);
       }
     } else {
       this.allResultsFetched = true;
       if (this.onComplete) {
-        this.onComplete(this.rows, null, null, this.allResultsFetched);
+        this.onComplete(this.rows, null, null);
       }
     }
   }
@@ -69,7 +69,7 @@ class BigQueryManager {
   fetchNext(onCompleteCallback) {
     if(!this.jobId || this.allResultsFetched) {
       if(onCompleteCallback) {
-        onCompleteCallback ([], null, null, true);
+        onCompleteCallback ([], null, null);
       }
       return;
     }
@@ -100,6 +100,7 @@ class BigQueryManager {
   }
 }
 
+//currently unused, keeping it around in case we need it
 class MemcachedManager {
   constructor(address) {
     if(!address) {
