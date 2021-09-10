@@ -12,12 +12,11 @@
   "errNoAttr": "Please provide an attribution id to filter results",
   "errNoTimestamp": "Please provide a \"from\" value that is a Unix timestamp in seconds",
   "errBadTimestamp": "\"from\" value must be a Unix timestamp in seconds",
-  "errBadCursor": "\"next\" must be an alphanumeric string",
+  "errBadCursor": "\"token\" must be an alphanumeric string",
+  "errNoCursor": "Please provide a Unix timestamp or a cache token",
   "sourceMapping": {
-    "fb_web": "fb_web",
-    "fb_app": "fb_app",
-    "google_web": "google_web",
-    "google_app": "google_app",
-    "direct": "direct"
+    "fb": "Facebook",
+    "google": "Google",
+    "direct": "Direct"
   }
 }

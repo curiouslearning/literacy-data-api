@@ -103,14 +103,14 @@ describe('BigQueryManager', () => {
     const test = new BigQueryManager(queryOptions, maxRows);
     const callback= sandbox.stub();
     await test.start(callback);
-    callback.should.have.been.calledWith(queryResults.set1, jobId, token, false);
+    callback.should.have.been.calledWith(queryResults.set1, jobId, token);
   });
   it('should inform the client when all results fetched', async () => {
     job.getQueryResults.onCall(0).callsArgWith(1, null, queryResults.set2, null, {msg: 'fake-api-response'});
     const test = new BigQueryManager(queryOptions, maxRows);
     const callback = sandbox.stub();
     await test.start(callback);
-    callback.should.have.been.calledWith(queryResults.set2, null, null, true);
+    callback.should.have.been.calledWith(queryResults.set2, null, null);
   });
   it('should create a job object with the id', () => {
     try{
@@ -131,7 +131,7 @@ describe('BigQueryManager', () => {
     test.allResultsFetched = true;
     const callback = sandbox.stub();
     test.fetchNext(callback);
-    callback.should.have.been.calledWith([], null, null, true);
+    callback.should.have.been.calledWith([], null, null);
   })
   it('should pass the token when resuming a job', () => {
     const test = new BigQueryManager(queryOptions, maxRows, jobId, token);
@@ -146,13 +146,13 @@ describe('BigQueryManager', () => {
     const test = new BigQueryManager(queryOptions, maxRows);
     const callback = sandbox.stub();
     test.fetchNext(callback);
-    callback.should.have.been.calledWith([], null, null, true);
+    callback.should.have.been.calledWith([], null, null);
   });
 
   it('should fetch the next set of results', (done) => {
     const test = new BigQueryManager(queryOptions, maxRows);
-    const callback = (rows, jobId, token, isComplete) => {
-      if (isComplete) {
+    const callback = (rows, jobId, token) => {
+      if (!token) {
         rows.should.deep.equal(queryResults.set2);
         done();
       } else {

@@ -15,17 +15,17 @@ WITH
     *,
     params.value.string_value as attribution_id
   FROM
-    `{{table}}`,
+    `{{dataset}}.events_*`,
     UNNEST(event_params) AS params
   WHERE
     _TABLE_SUFFIX BETWEEN '20210801' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_name = 'app_initialized'
-    AND params.value.string_value = @attr_id OR @attr_id = ''),
+    AND params.value.string_value = @ref_id OR @ref_id = ''),
   LITERACY_DATA AS (
   SELECT
     *
   FROM
-    `{{table}}`
+    `{{dataset}}.events_*`
   WHERE
     _TABLE_SUFFIX BETWEEN FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL @range DAY))
     AND FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
@@ -33,23 +33,33 @@ WITH
     AND event_timestamp > @cursor
     AND (event_name = 'SubSkill'
       OR event_name = 'TimeTracking'
-      OR event_name = 'GamePlay') ),
+      OR event_name = 'GamePlay')
+    AND (device.advertising_id = @user_id OR user_pseudo_id = @user_id OR @user_id = '') ),
 FILTERED_LIT_DATA AS (
     SELECT
-        *,
-        event_params
+        `{{dataset}}.getValue`(params.value) as action,
+        *
     FROM
         LITERACY_DATA,
-        UNNEST(event_params) as params
+        UNNEST(LITERACY_DATA.event_params) as params
     WHERE
         params.key = "action"
-        AND (params.value.string_value LIKE @event OR @event = '')
-)LABELS AS (
+        AND (params.value.string_value LIKE CONCAT(@event, '%') OR @event = '')
+), SCREENS AS (
+  SELECT
+    `{{dataset}}.getValue`(params.value) as screen,
+    *
+  FROM
+    FILTERED_LIT_DATA,
+    UNNEST(FILTERED_LIT_DATA.event_params) as params
+  WHERE
+    params.key = "firebase_screen"
+), LABELS AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as label,
         *
-    FROM FILTERED_LIT_DATA,
-    UNNEST(FILTERED_LIT_DATA.event_params) as params
+    FROM SCREENS,
+    UNNEST(SCREENS.event_params) as params
     WHERE params.key = "label"
 ),
 ACTIONS AS (
@@ -70,8 +80,8 @@ VALS AS (
 )
 SELECT
   APP_INITIALIZED.attribution_id,
-  VALS.*
+  VALS.* EXCEPT (event_params, user_properties)
 FROM
   APP_INITIALIZED
-INNER JOIN VALS on APP_INITIALIZED.device.advertising_id = VALS.device.advertising_id
+INNER JOIN VALS on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
 ORDER BY event_timestamp DESC

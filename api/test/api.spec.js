@@ -35,8 +35,8 @@ describe('Literacy API Routes', () => {
       set: sandbox.stub(),
     };
     bqManager = {
-      start: sandbox.stub().callsArgWith(0, resultSet, jobId, token, false),
-      fetchNext: sandbox.stub().callsArgWith(0, resultSet, null, null, true),
+      start: sandbox.stub().callsArgWith(0, resultSet, jobId, token),
+      fetchNext: sandbox.stub().callsArgWith(0, resultSet, null, null),
       getOptions: sandbox.stub().returns(queryOptions),
       isComplete: sandbox.stub().returns(false),
     };
@@ -161,35 +161,39 @@ describe('Literacy API Routes', () => {
   it('the data we receive are properly formatted', (done) => {
     let expected = resultSet.map((row)=> {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
-            source: "no-source",
+            source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
-          properties: row.user_properties,
         },
         event: {
-          name: row.event_name,
+          name: parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          action: row.action,
-          label: row.label,
-          value: row.value,
-          value_type: row.type,
+          value_type: getValueType(row.label),
+          value: getValue(row.label) || row.val,
+          level: getLevel(row.screen) || row.label.split('_')[1],
+          profile: getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            value: row.value,
+          }
         },
-      }
+      };
     });
     request
         .get('/fetch_latest')
@@ -216,12 +220,12 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-        res.body.nextCursor.should.equal(token);
+        res.body.nextCursor.should.equal(encodeURIComponent(`${jobId}/${token}`));
         done();
       })
   });
   it('we receive no cursor when there is no more data', (done) => {
-    bqManager.start.callsArgWith(0, resultSet, null, null, true);
+    bqManager.start.callsArgWith(0, resultSet, null, null);
     request
         .get('/fetch_latest')
         .query({
@@ -241,37 +245,41 @@ describe('Literacy API Routes', () => {
     let secondResults = queryResults.set4
     let expected = secondResults.map((row) => {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
             source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
-          properties: row.user_properties,
         },
         event: {
-          name: row.event_name,
+          name: parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          action: row.action,
-          label: row.label,
-          value: row.value,
-          value_type: row.type,
+          value_type: getValueType(row.label),
+          value: getValue(row.label) || row.val,
+          level: getLevel(row.screen) || row.label.split('_')[1],
+          profile: getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            value: row.value,
+          }
         },
       };
     });
-    bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
+    bqManager.fetchNext.callsArgWith(0, secondResults, null, null);
     request
       .get('/fetch_latest')
       .query({
@@ -282,18 +290,19 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-
+        console.log("beep");
         request
           .get('/fetch_latest')
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.body.nextCursor,
+            from: 0,
+            token: res.body.nextCursor,
           })
           .expect(200)
           .end((err, fi) => {
             if (err) return done(err);
-
+            console.log("boop");
             fi.body.data.should.deep.equal(expected);
             done();
           });
@@ -303,36 +312,41 @@ describe('Literacy API Routes', () => {
     let secondResults = queryResults.set4
     let expected = secondResults.map((row) => {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
             source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
         },
         event: {
-          name: row.event_name,
+          name: parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          action: row.action,
-          label: row.label,
-          value: row.value,
-          value_type: row.type,
-        }
+          value_type: getValueType(row.label),
+          value: getValue(row.label) || row.val,
+          level: getLevel(row.screen) || row.label.split('_')[1],
+          profile: getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            value: row.value,
+          }
+        },
       };
     });
-    bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
+    bqManager.fetchNext.callsArgWith(0, secondResults, null, null);
     request
       .get('/fetch_latest')
       .query({
@@ -350,7 +364,8 @@ describe('Literacy API Routes', () => {
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.body.nextCursor,
+            from: 0,
+            token: res.body.nextCursor,
           })
           .expect(200)
           .end((err, fi) => {
@@ -362,3 +377,57 @@ describe('Literacy API Routes', () => {
       })
   })
 });
+
+//*****HELPERS
+
+
+function getLevel (screen) {
+  try {
+    return screen.split('-')[0].split(' ')[1];
+  } catch(e) {
+    return null;
+  }
+}
+
+function getProfile(screen) {
+  try {
+    return screen.split(':')[1].trim();
+  } catch(e) {
+    return null;
+  }
+}
+
+function parseName(action) {
+  if(action.indexOf('Segment') !== -1 || action.indexOf('Level') !== -1 || action.indexOf('Monster') !==-1) {
+    return action.split('_')[0].trim();
+  } else {
+    return action;
+  }
+}
+
+function getValueType(label) {
+  let spacesSplit = label.split(' ');
+  if (spacesSplit[0] === 'Puzzle') {
+    return label.split(':')[0].replace('Puzzle ', '');
+  } else if (spacesSplit[1] === 'puzzles') {
+    return spacesSplit[1];
+  } else if (spacesSplit[0] === 'days_since_last') {
+    return 'days';
+  } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session') {
+    return 'seconds';
+  } else if (spacesSplit[0].indexOf('Level') !== -1){
+    return 'Monster Level'
+  }else{
+    return null;
+  }
+}
+
+function getValue(label) {
+  if(label.indexOf('Puzzle') !== -1) {
+    return label.split(':')[1].trim();
+  } else if (label.indexOf('puzzles') != -1) {
+    return label.split(' ')[0].trim();
+  } else {
+    return null;
+  }
+}

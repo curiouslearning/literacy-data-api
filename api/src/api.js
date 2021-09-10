@@ -13,9 +13,6 @@ const {
   SqlLoader
 } = require('./helperClasses');
 const queryStrings = new SqlLoader(config.sqlFiles, './src/sql');
-const dns = process.env.MEMCACHE_DNS;
-const port = process.env.MEMCACHE_PORT;
-const cacheManager = new MemcachedManager(`${dns}:${port}`);
 
 const DAYINSECONDS = 86400;
 /**
@@ -23,7 +20,7 @@ const DAYINSECONDS = 86400;
 * @param{string} id the app id
 * @returns{string} the table name in SQL table format
 */
-const getTable = function (map, id, getHistoric) {
+const getDataset = function (map, id, getHistoric) {
   const regex = /(^[a-z]{2,3})([\.][a-z0-9]*)+$/gmi;
   if (!id.match(regex)) {
     const msg = `cannot parse app id: '${id}'. Check formatting and try again`;
@@ -35,15 +32,12 @@ const getTable = function (map, id, getHistoric) {
     const err = new MissingDataError(msg);
     throw err;
   }
-  return `${obj.project}.${obj.dataset}.${obj.table}`;
+  return `${obj.project}.${obj.dataset}`;
 }
 
-function sendRows(res, rows, nextCursor, key) {
-  if (!rows || rows.length == 0 || !nextCursor) {
-    cacheManager.removeCache(key);
-  }
+function sendRows(res, rows, nextCursor) {
   const resObj = formatRowsToJson(rows);
-  return res.status(200).json({nextCursor, data: resObj});
+  return res.status(200).json({nextCursor, size: resObj.length, data: resObj});
 }
 
 function formatRowsToJson (rows) {
@@ -55,36 +49,91 @@ function formatRowsToJson (rows) {
       user: {
         id: row.user_pseudo_id,
         metadata: {
-          continent: row.continent,
-          country: row.country,
-          region: row.region,
-          city: row.city,
+          continent: row.geo.continent,
+          country: row.geo.country,
+          region: row.geo.region,
+          city: row.geo.city,
         },
         ad_attribution: {
           source: getSource(row.attribution_id),
           data: {
-            advertising_id: row.advertising_id,
+            advertising_id: row.device.advertising_id,
           },
         },
-        properties: row.user_properties,
       },
       event: {
-        name: row.event_name,
+        name: parseName(row.action),
         date: row.event_date,
         timestamp: row.event_timestamp,
-        action: row.action,
-        label: row.label,
-        value: row.value,
-        value_type: row.type,
+        value_type: getValueType(row.label),
+        value: getValue(row.label) || row.val,
+        level: getLevel(row.screen) || row.label.split('_')[1],
+        profile: getProfile(row.screen) || 'unknown',
+        rawData: {
+          action: row.action,
+          label: row.label,
+          value: row.value,
+        }
       },
     };
   });
   return resObj;
 }
 
+function getLevel (screen) {
+  try {
+    return screen.split('-')[0].split(' ')[1];
+  } catch(e) {
+    return null;
+  }
+}
+
+function getProfile(screen) {
+  try {
+    return screen.split(':')[1].trim();
+  } catch(e) {
+    return null;
+  }
+}
+
+function parseName(action) {
+  if(action.indexOf('Segment') !== -1 || action.indexOf('Level') !== -1 || action.indexOf('Monster') !==-1) {
+    return action.split('_')[0].trim();
+  } else {
+    return action;
+  }
+}
+
+function getValueType(label) {
+  let spacesSplit = label.split(' ');
+  if (spacesSplit[0] === 'Puzzle') {
+    return label.split(':')[0].replace('Puzzle ', '');
+  } else if (spacesSplit[1] === 'puzzles') {
+    return spacesSplit[1];
+  } else if (spacesSplit[0] === 'days_since_last') {
+    return 'days';
+  } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session') {
+    return 'seconds';
+  } else if (spacesSplit[0].indexOf('Level') !== -1){
+    return 'Monster Level'
+  }else{
+    return null;
+  }
+}
+
+function getValue(label) {
+  if(label.indexOf('Puzzle') !== -1) {
+    return label.split(':')[1].trim();
+  } else if (label.indexOf('puzzles') != -1) {
+    return label.split(' ')[0].trim();
+  } else {
+    return null;
+  }
+}
+
 function getSource(referralString) {
   if (!referralString) return "no-source";
-  const regex = /^([a-z]{1,6})(_[a-z]{1,3})?/gmi;
+  const regex = /^([a-z]{1,6})?/gmi;
   const group = referralString.match(regex);
   if(group){
     let source = group.toString().toLowerCase();
@@ -107,9 +156,9 @@ async function fetchLatestHandler (req, res, next) {
 
   if (!searchParams.app_id) { //TODO: Edit proofreading to allow timestamp OR job hash
     return res.status(400).send({msg: config.errNoId});
-  } else if (!searchParams.from) {
-    return res.status(400).send({msg: config.errNoTimestamp});
-  } else if (!searchParams.from.match(/[0-9]{10}/gmi)) {
+  } else if (!searchParams.from && !searchParams.token) {
+    return res.status(400).send({msg: config.errNoCursor});
+  } else if (!searchParams.from.match(/[0-9]{1,10}/gmi)) {
     return res.status(400).send({msg: config.errBadTimestamp});
   }
   const sql = queryStrings.getQueryString(config.sqlFiles.fetchLatest)
@@ -119,6 +168,8 @@ async function fetchLatestHandler (req, res, next) {
     params: {
       pkg_id: searchParams.app_id,
       ref_id: searchParams.attribution_id || '',
+      user_id: searchParams.user_id || '',
+      event: searchParams.event || '',
       cursor: Number(searchParams.from) * 1000000, //convert to micros
       //only search back as far as we need to
       range:  Math.ceil(((Date.now()/1000) - searchParams.from)/DAYINSECONDS),
@@ -132,21 +183,19 @@ async function fetchLatestHandler (req, res, next) {
   };
 
   try{
-    const table = getTable(tableMap, options.params.pkg_id);
-    options.query = mustache.render(options.query, {table: table}); //TODO: gotta expand this for UDF project.dataset prefixes too
+    const dataset = getDataset(tableMap, options.params.pkg_id);
+    options.query = mustache.render(options.query, {dataset: dataset});
     const maxRows = config.fetchLatestQuery.MAXROWS;
-    const callback = (rows, id, token, isComplete) => {
+    const callback = (rows, id, token) => {
       if(id && token) {
-        let encodeString = `${id}-${token}`;
-        const encodedToken = btoa(encodeString);
-        sendRows(res, rows, token);
+        let combinedToken = encodeURIComponent(`${id}/${token}`);
+        sendRows(res, rows, combinedToken);
       } else {
         sendRows(res, rows, null);
       }
     };
     if(searchParams.token) {
-      let decodedToken = atob(searchParams.token);
-      let params = decodedToken.split('-');
+      let params = decodeURIComponent(searchParams.token).split('/');
       const job = {id: params[0], token: params[1]};
       //TODO decode token into job id and token
       const bq = new BigQueryManager(options, maxRows, job.id, job.token);
