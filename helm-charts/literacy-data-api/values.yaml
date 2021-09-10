@@ -8,23 +8,18 @@ import-values:
 replicaCount: 3
 
 tags:
-  memcached: true
 container:
   env:
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: "/app/var/secrets/keys/bigquery-serviceaccount.json"
-    - name: MEMCACHE_DNS
-      value: "lit-data-memcached"
-    - name: MEMCACHE_PORT
-      value: "11211"
   volumeMounts:
     - name: keys
       readOnly: true
       mountPath: "/app/var/secrets/keys"
 image:
-  repository: etondreau/literacy-data-api
-  pullPolicy: IfNotPresent
-  tag: ""
+  repository: localhost:5000/lit-data
+  pullPolicy: Always
+  tag: registry
 
 imagePullSecrets: []
 nameOverride: "api"
