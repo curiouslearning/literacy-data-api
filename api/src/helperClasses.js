@@ -16,6 +16,125 @@ class MalformedArgumentError extends Error {
   }
 }
 
+class BigQueryParser {
+  constructor(mapping){
+    this.mapping = mapping;
+  }
+
+  formatRowsToJson (rows) {
+    let resObj = rows.map((row) => {
+      return {
+        attribution_url: row.attribution_id,
+        app_id: row.app_package_name,
+        ordered_id: row.event_timestamp,
+        user: {
+          id: row.user_pseudo_id,
+          metadata: {
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
+          },
+          ad_attribution: {
+            source: this.getSource(row.attribution_id),
+            data: {
+              advertising_id: row.device.advertising_id,
+            },
+          },
+        },
+        event: {
+          name: this.parseName(row.action),
+          date: row.event_date,
+          timestamp: row.event_timestamp,
+          value_type: this.getValueType(row.label),
+          value: this.getValue(row.label) || row.val,
+          level: this.getLevel(row.screen) || this.getLevel(row.label)||this.getLevel(row.action)||"0",
+          profile: this.getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            screen: row.screen,
+            value: row.value,
+          }
+        },
+      };
+    });
+    return resObj;
+  }
+
+  getLevel(input) {
+    try {
+      if(input.split('-').length > 1) {
+        return input.split('-')[0].split(' ')[1];
+      } else if (input.split('_').length > 1) {
+        let arr = input.split('_');
+        let val = arr[arr.length-1];
+        if(Number(val)){
+          return val;
+        }
+      } else {
+        return null;
+      }
+    } catch(e) {
+      return null;
+    }
+  }
+
+  getProfile(screen) {
+    try {
+      return screen.split(':')[1].trim();
+    } catch(e) {
+      return null;
+    }
+  }
+
+  parseName(action) {
+    if(action.indexOf('Segment') !== -1 || action.indexOf('Level') !== -1 || action.indexOf('Monster') !==-1) {
+      return action.split('_')[0].trim();
+    } else {
+      return action;
+    }
+  }
+
+  getValueType(label) {
+    let spacesSplit = label.split(' ');
+    if (spacesSplit[0] === 'Puzzle') {
+      return label.split(':')[0].replace('Puzzle ', '');
+    } else if (spacesSplit[1] === 'puzzles') {
+      return spacesSplit[1];
+    } else if (spacesSplit[0] === 'days_since_last') {
+      return 'days';
+    } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session') {
+      return 'seconds';
+    } else if (spacesSplit[0].indexOf('Level') !== -1){
+      return 'Monster Level'
+    }else{
+      return null;
+    }
+  }
+
+  getValue(label) {
+    if(label.indexOf('Puzzle') !== -1) {
+      return label.split(':')[1].trim();
+    } else if (label.indexOf('puzzles') != -1) {
+      return label.split(' ')[0].trim();
+    } else {
+      return null;
+    }
+  }
+
+  getSource(referralString) {
+    if (!referralString) return "no-source";
+    const group = referralString.split('_');
+    let source = group[0].toString().toLowerCase();
+    if(this.mapping[source])
+    {
+      return this.mapping[source];
+    }
+    return 'no-source';
+  }
+}
+
 class BigQueryManager {
   constructor (queryOptions, maxRows, jobId, token) {
     this.queryOptions = queryOptions;
@@ -206,6 +325,7 @@ module.exports = {
   MissingDataError,
   MalformedArgumentError,
   BigQueryManager,
+  BigQueryParser,
   MemcachedManager,
   SqlLoader
 };

@@ -17,6 +17,6 @@
   "sourceMapping": {
     "fb": "Facebook",
     "google": "Google",
-    "direct": "Direct"
+    "(direct)": "direct"
   }
 }

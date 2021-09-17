@@ -4,12 +4,15 @@ const supertest = require('supertest');
 const express = require('express');
 const sandbox = sinon.createSandbox();
 const queryResults = require('./fixtures/queryResults.json');
+const {BigQueryParser} = require('../src/helperClasses.js');
+const config = require('../src/config.json');
 
 describe('Literacy API Routes', () => {
   let app, request, cacheManager, bqManager, sqlLoader;
   let pkgId, attrId, from, queryOptions;
   let resultSet, jobId, token;
   let api;
+  const bqParser = new BigQueryParser(config.sourceMapping);
   beforeEach(() => {
     pkgId = 'fake-pkg';
     attrId = '';
@@ -180,16 +183,17 @@ describe('Literacy API Routes', () => {
           },
         },
         event: {
-          name: parseName(row.action),
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          value_type: getValueType(row.label),
-          value: getValue(row.label) || row.val,
-          level: getLevel(row.screen) || row.label.split('_')[1],
-          profile: getProfile(row.screen) || 'unknown',
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
           rawData: {
             action: row.action,
             label: row.label,
+            screen: row.screen,
             value: row.value,
           }
         },
@@ -264,16 +268,17 @@ describe('Literacy API Routes', () => {
           },
         },
         event: {
-          name: parseName(row.action),
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          value_type: getValueType(row.label),
-          value: getValue(row.label) || row.val,
-          level: getLevel(row.screen) || row.label.split('_')[1],
-          profile: getProfile(row.screen) || 'unknown',
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
           rawData: {
             action: row.action,
             label: row.label,
+            screen: row.screen,
             value: row.value,
           }
         },
@@ -331,16 +336,17 @@ describe('Literacy API Routes', () => {
           },
         },
         event: {
-          name: parseName(row.action),
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          value_type: getValueType(row.label),
-          value: getValue(row.label) || row.val,
-          level: getLevel(row.screen) || row.label.split('_')[1],
-          profile: getProfile(row.screen) || 'unknown',
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
           rawData: {
             action: row.action,
             label: row.label,
+            screen: row.screen,
             value: row.value,
           }
         },
@@ -377,57 +383,3 @@ describe('Literacy API Routes', () => {
       })
   })
 });
-
-//*****HELPERS
-
-
-function getLevel (screen) {
-  try {
-    return screen.split('-')[0].split(' ')[1];
-  } catch(e) {
-    return null;
-  }
-}
-
-function getProfile(screen) {
-  try {
-    return screen.split(':')[1].trim();
-  } catch(e) {
-    return null;
-  }
-}
-
-function parseName(action) {
-  if(action.indexOf('Segment') !== -1 || action.indexOf('Level') !== -1 || action.indexOf('Monster') !==-1) {
-    return action.split('_')[0].trim();
-  } else {
-    return action;
-  }
-}
-
-function getValueType(label) {
-  let spacesSplit = label.split(' ');
-  if (spacesSplit[0] === 'Puzzle') {
-    return label.split(':')[0].replace('Puzzle ', '');
-  } else if (spacesSplit[1] === 'puzzles') {
-    return spacesSplit[1];
-  } else if (spacesSplit[0] === 'days_since_last') {
-    return 'days';
-  } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session') {
-    return 'seconds';
-  } else if (spacesSplit[0].indexOf('Level') !== -1){
-    return 'Monster Level'
-  }else{
-    return null;
-  }
-}
-
-function getValue(label) {
-  if(label.indexOf('Puzzle') !== -1) {
-    return label.split(':')[1].trim();
-  } else if (label.indexOf('puzzles') != -1) {
-    return label.split(' ')[0].trim();
-  } else {
-    return null;
-  }
-}
