@@ -18,7 +18,8 @@ class BigQueryStatementBuilder {
         objectType: selectObjectType(row),
         id: getObjectIri(row),
       },
-        timestamp: row.event_timestamp,
+      context: generateContext(statement),
+      timestamp: row.event_timestamp,
     };
     statement = checkForAndAddResult(statement);
   }

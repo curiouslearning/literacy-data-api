@@ -1,32 +1,69 @@
 {
+  "feedTheMonster": {
+    "id": "https://curiouslearning.org/FTM/languages",
+    "objectType": "Activity",
+    "definition": {
+      "display": {
+        "en-US": "Feed The Monster"
+      }
+    }
+  },
+  "ftmSegment": {
+    "id": "https://curiouslearning.org/FTM/activities/segment",
+    "objectType": "Activity",
+    "definition": {
+			"display": {
+				"en-US": "Segment"
+    	}
+		}
+  },
+  "ftmLevel": {
+    "id": "https://curiouslearning.org/FTM/activities/level"
+    "objectType": "Activity",
+    "definition": {
+			"display": {
+				"en-US": "Level"
+    	}
+		}
+  },
   "splashScreen": {
     "id": "https://curiouslearning.org/FTM/screens/splash",
-    "display": {
-      "en-US": "Splash Screen",
-    }
+    "definition": {
+			"display": {
+      	"en-US": "Splash Screen",
+    	}
+		}
   },
   "Profile": {
     "id": "https://curiouslearning.org/FTM/screens/profile",
-    "display": {
-      "en-US": "Profile Screen",
-    }
+    "definition": {
+			"display": {
+      	"en-US": "Profile Screen",
+    	}
+		}
   },
   "Map": {
     "id": "https://curiouslearning.org/FTM/screens/map",
-    "display": {
-      "en-US": "Map",
-    }
+    "definition": {
+			"display": {
+      	"en-US": "Map",
+    	}
+		}
   },
   "Settings": {
     "id": "https://curiouslearning.org/FTM/screens/settings",
-    "display": {
-      "en-US": "Settings Screen",
-    }
+    "definition": {
+			"display": {
+      	"en-US": "Settings Screen",
+    	}
+		}
   },
-  "Settings": {
-    "id": "https://curiouslearning.org/FTM/screens/settings",
-    "display": {
-      "en-US": "Settings Screen",
-    }
-  },
+  "minigames": {
+    "id": "https://curiouslearning.org/FTM/screens/minigames",
+    "definition": {
+			"display": {
+      	"en-US": "Settings Screen",
+    	}
+		}
+  }
 }
