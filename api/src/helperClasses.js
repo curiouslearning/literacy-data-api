@@ -72,6 +72,8 @@ class BigQueryParser {
         if(Number(val)){
           return val;
         }
+      } else if(input === 'Splash Screen' || input === 'Map'){
+        return input;
       } else {
         return null;
       }
@@ -97,6 +99,9 @@ class BigQueryParser {
   }
 
   getValueType(label) {
+    if (label === '') {
+      return 'N/A';
+    }
     let spacesSplit = label.split(' ');
     if (spacesSplit[0] === 'Puzzle') {
       return label.split(':')[0].replace('Puzzle ', '');
@@ -104,7 +109,7 @@ class BigQueryParser {
       return spacesSplit[1];
     } else if (spacesSplit[0] === 'days_since_last') {
       return 'days';
-    } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session') {
+    } else if (spacesSplit[0] === 'total_playtime' || spacesSplit[0] === 'average_session' || spacesSplit[0] === 'timestamp') {
       return 'seconds';
     } else if (spacesSplit[0].indexOf('Level') !== -1){
       return 'Monster Level'

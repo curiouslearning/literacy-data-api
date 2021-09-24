@@ -12,8 +12,11 @@ AS(
 WITH
   APP_INITIALIZED AS (
   SELECT
-    *,
-    params.value.string_value as attribution_id
+    params.value.string_value as attribution_id,
+    CAST(event_timestamp as STRING) as val,
+    "app_initialized" as action,
+    "timestamp" as label,
+    * EXCEPT(user_properties, key, value)
   FROM
     `{{dataset}}.events_*`,
     UNNEST(event_params) AS params
@@ -21,6 +24,39 @@ WITH
     _TABLE_SUFFIX BETWEEN '20210801' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_name = 'app_initialized'
     AND params.value.string_value = @ref_id OR @ref_id = ''),
+  INIT_SCREEN AS (
+    SELECT
+      attribution_id,
+      val,
+      action,
+      label,
+      `{{dataset}}.getValue`(params.value) as screen,
+      * EXCEPT(attribution_id, val, action, label, event_params, key, value)
+    FROM
+      APP_INITIALIZED,
+      UNNEST(APP_INITIALIZED.event_params) as params
+    WHERE
+      params.key = 'screen'
+  ),
+  DEFAULT_SCREEN AS (
+    SELECT
+        attribution_id,
+        val,
+        action,
+        label,
+        "Splash Screen" as screen,
+        * EXCEPT(attribution_id, val, action, label, event_params)
+    FROM
+        APP_INITIALIZED
+    WHERE
+        NOT EXISTS(
+          SELECT
+            *
+          FROM
+            UNNEST(event_params) as params
+          WHERE params.key = 'firebase_screen'
+        )
+),
   LITERACY_DATA AS (
   SELECT
     *
@@ -38,7 +74,7 @@ WITH
 FILTERED_LIT_DATA AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as action,
-        *
+        * EXCEPT(key, value)
     FROM
         LITERACY_DATA,
         UNNEST(LITERACY_DATA.event_params) as params
@@ -48,7 +84,7 @@ FILTERED_LIT_DATA AS (
 ), SCREENS AS (
   SELECT
     `{{dataset}}.getValue`(params.value) as screen,
-    *
+    * EXCEPT(key, value)
   FROM
     FILTERED_LIT_DATA,
     UNNEST(FILTERED_LIT_DATA.event_params) as params
@@ -57,25 +93,17 @@ FILTERED_LIT_DATA AS (
 ), LABELS AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as label,
-        *
+        * EXCEPT(key, value)
     FROM SCREENS,
     UNNEST(SCREENS.event_params) as params
     WHERE params.key = "label"
 ),
-ACTIONS AS (
-    SELECT
-        `{{dataset}}.getValue`(params.value) as action,
-        *
-    FROM LABELS,
-    UNNEST(LABELS.event_params) as params
-    WHERE params.key = "action"
-),
 VALS AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as val,
-        *
-    FROM ACTIONS,
-    UNNEST(ACTIONS.event_params) as params
+        * EXCEPT(key, value)
+    FROM LABELS,
+    UNNEST(LABELS.event_params) as params
     WHERE params.key = "value"
 )
 SELECT
@@ -84,4 +112,16 @@ SELECT
 FROM
   APP_INITIALIZED
 INNER JOIN VALS on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
+UNION ALL(
+  SELECT
+    *
+  FROM
+    INIT_SCREEN
+)
+UNION ALL (
+  SELECT
+    *
+  FROM
+    DEFAULT_SCREEN
+)
 ORDER BY event_timestamp DESC
