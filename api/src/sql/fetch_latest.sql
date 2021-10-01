@@ -23,13 +23,13 @@ WITH
   WHERE
     _TABLE_SUFFIX BETWEEN '20210801' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_name = 'app_initialized'
-    AND params.value.string_value = @ref_id OR @ref_id = ''),
+    AND params.value.string_value = @ref_id OR @ref_id=''),
   INIT_SCREEN AS (
     SELECT
       attribution_id,
-      val,
       action,
       label,
+      val,
       `{{dataset}}.getValue`(params.value) as screen,
       * EXCEPT(attribution_id, val, action, label, event_params, key, value)
     FROM
@@ -41,9 +41,9 @@ WITH
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
-        val,
         action,
         label,
+        val,
         "Splash Screen" as screen,
         * EXCEPT(attribution_id, val, action, label, event_params)
     FROM
@@ -70,7 +70,8 @@ WITH
     AND (event_name = 'SubSkill'
       OR event_name = 'TimeTracking'
       OR event_name = 'GamePlay')
-    AND (device.advertising_id = @user_id OR user_pseudo_id = @user_id OR @user_id = '') ),
+    AND (device.advertising_id = @user_id OR user_pseudo_id = @user_id OR @user_id = '')
+    ),
 FILTERED_LIT_DATA AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as action,
@@ -84,7 +85,8 @@ FILTERED_LIT_DATA AS (
 ), SCREENS AS (
   SELECT
     `{{dataset}}.getValue`(params.value) as screen,
-    * EXCEPT(key, value)
+    action,
+    * EXCEPT(action, key, value)
   FROM
     FILTERED_LIT_DATA,
     UNNEST(FILTERED_LIT_DATA.event_params) as params
@@ -92,35 +94,54 @@ FILTERED_LIT_DATA AS (
     params.key = "firebase_screen"
 ), LABELS AS (
     SELECT
+        action,
         `{{dataset}}.getValue`(params.value) as label,
-        * EXCEPT(key, value)
+        screen,
+        * EXCEPT(action, screen, key, value)
     FROM SCREENS,
     UNNEST(SCREENS.event_params) as params
     WHERE params.key = "label"
 ),
 VALS AS (
     SELECT
+        action,
+        label,
         `{{dataset}}.getValue`(params.value) as val,
-        * EXCEPT(key, value)
+        screen,
+        * EXCEPT(label, action, screen, key, value)
     FROM LABELS,
     UNNEST(LABELS.event_params) as params
     WHERE params.key = "value"
 )
 SELECT
   APP_INITIALIZED.attribution_id,
-  VALS.* EXCEPT (event_params, user_properties)
+  VALS.action,
+  VALS.label,
+  VALS.val,
+  VALS.screen,
+  VALS.* EXCEPT(action, label, val, screen, event_params, user_properties)
 FROM
-  APP_INITIALIZED
-INNER JOIN VALS on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
+  VALS
+INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
 UNION ALL(
   SELECT
-    *
+    attribution_id,
+    action,
+    label,
+    val,
+    screen,
+    * EXCEPT(attribution_id, action, screen, label, val)
   FROM
     INIT_SCREEN
 )
 UNION ALL (
   SELECT
-    *
+    attribution_id,
+    action,
+    label,
+    val,
+    screen,
+    * EXCEPT(attribution_id, action, screen, label, val)
   FROM
     DEFAULT_SCREEN
 )
