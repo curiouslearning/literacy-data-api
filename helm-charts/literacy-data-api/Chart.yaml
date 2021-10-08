@@ -6,10 +6,3 @@ type: application
 version: 0.0.1
 
 appVersion: "v0.0.1"
-
-dependencies:
-  - name: memcached
-    tags:
-      - memcached
-    version: "~5.13.0"
-    repository: "https://charts.bitnami.com/bitnami"

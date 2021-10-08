@@ -4,12 +4,15 @@ const supertest = require('supertest');
 const express = require('express');
 const sandbox = sinon.createSandbox();
 const queryResults = require('./fixtures/queryResults.json');
+const {BigQueryParser} = require('../src/helperClasses.js');
+const config = require('../src/config.json');
 
 describe('Literacy API Routes', () => {
   let app, request, cacheManager, bqManager, sqlLoader;
   let pkgId, attrId, from, queryOptions;
   let resultSet, jobId, token;
   let api;
+  const bqParser = new BigQueryParser(config.sourceMapping);
   beforeEach(() => {
     pkgId = 'fake-pkg';
     attrId = '';
@@ -35,8 +38,8 @@ describe('Literacy API Routes', () => {
       set: sandbox.stub(),
     };
     bqManager = {
-      start: sandbox.stub().callsArgWith(0, resultSet, jobId, token, false),
-      fetchNext: sandbox.stub().callsArgWith(0, resultSet, null, null, true),
+      start: sandbox.stub().callsArgWith(0, resultSet, jobId, token),
+      fetchNext: sandbox.stub().callsArgWith(0, resultSet, null, null),
       getOptions: sandbox.stub().returns(queryOptions),
       isComplete: sandbox.stub().returns(false),
     };
@@ -161,33 +164,40 @@ describe('Literacy API Routes', () => {
   it('the data we receive are properly formatted', (done) => {
     let expected = resultSet.map((row)=> {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
             source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
         },
         event: {
-          name: row.event_name,
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          key: `${row.action} - ${row.label}`,
-          value: row.value,
-          value_type: row.type,
-        }
-      }
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            screen: row.screen,
+            value: row.value,
+          }
+        },
+      };
     });
     request
         .get('/fetch_latest')
@@ -214,12 +224,12 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-        res.body.nextCursor.should.equal(token);
+        res.body.nextCursor.should.equal(encodeURIComponent(`${jobId}/${token}`));
         done();
       })
   });
   it('we receive no cursor when there is no more data', (done) => {
-    bqManager.start.callsArgWith(0, resultSet, null, null, true);
+    bqManager.start.callsArgWith(0, resultSet, null, null);
     request
         .get('/fetch_latest')
         .query({
@@ -239,35 +249,42 @@ describe('Literacy API Routes', () => {
     let secondResults = queryResults.set4
     let expected = secondResults.map((row) => {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
             source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
         },
         event: {
-          name: row.event_name,
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          key: `${row.action} - ${row.label}`,
-          value: row.value,
-          value_type: row.type,
-        }
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            screen: row.screen,
+            value: row.value,
+          }
+        },
       };
     });
-    bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
+    bqManager.fetchNext.callsArgWith(0, secondResults, null, null);
     request
       .get('/fetch_latest')
       .query({
@@ -278,18 +295,19 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-
+        console.log("beep");
         request
           .get('/fetch_latest')
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.body.nextCursor,
+            from: 0,
+            token: res.body.nextCursor,
           })
           .expect(200)
           .end((err, fi) => {
             if (err) return done(err);
-
+            console.log("boop");
             fi.body.data.should.deep.equal(expected);
             done();
           });
@@ -299,35 +317,42 @@ describe('Literacy API Routes', () => {
     let secondResults = queryResults.set4
     let expected = secondResults.map((row) => {
       return {
-        attribution_url: row.referral_source,
+        attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
           id: row.user_pseudo_id,
           metadata: {
-            continent: row.continent,
-            country: row.country,
-            region: row.region,
-            city: row.city,
+            continent: row.geo.continent,
+            country: row.geo.country,
+            region: row.geo.region,
+            city: row.geo.city,
           },
           ad_attribution: {
             source: 'no-source',
             data: {
-              advertising_id: row.advertising_id,
+              advertising_id: row.device.advertising_id,
             },
           },
         },
         event: {
-          name: row.event_name,
+          name: bqParser.parseName(row.action),
           date: row.event_date,
           timestamp: row.event_timestamp,
-          key: `${row.action} - ${row.label}`,
-          value: row.value,
-          value_type: row.type,
-        }
+          value_type: bqParser.getValueType(row.label),
+          value: bqParser.getValue(row.label) || row.val,
+          level: bqParser.getLevel(row.screen) || row.label.split('_')[1],
+          profile: bqParser.getProfile(row.screen) || 'unknown',
+          rawData: {
+            action: row.action,
+            label: row.label,
+            screen: row.screen,
+            value: row.value,
+          }
+        },
       };
     });
-    bqManager.fetchNext.callsArgWith(0, secondResults, null, null, true);
+    bqManager.fetchNext.callsArgWith(0, secondResults, null, null);
     request
       .get('/fetch_latest')
       .query({
@@ -345,7 +370,8 @@ describe('Literacy API Routes', () => {
           .query({
             app_id: 'com.eduapp4syria.feedthemonsterENGLISH',
             attribution_id: 'referral_source_8675309',
-            from: res.body.nextCursor,
+            from: 0,
+            token: res.body.nextCursor,
           })
           .expect(200)
           .end((err, fi) => {

@@ -10,13 +10,13 @@
   },
   "errNoId": "Please provide an app id to search against",
   "errNoAttr": "Please provide an attribution id to filter results",
-  "errNoCursor": "Please provide a Unix timestamp in ms",
-  "errBadCursor": "Cursor must be a Unix timestamp in ms",
+  "errNoTimestamp": "Please provide a \"from\" value that is a Unix timestamp in seconds",
+  "errBadTimestamp": "\"from\" value must be a Unix timestamp in seconds",
+  "errBadCursor": "\"token\" must be an alphanumeric string",
+  "errNoCursor": "Please provide a Unix timestamp or a cache token",
   "sourceMapping": {
-    "fb_web": "fb_web",
-    "fb_app": "fb_app",
-    "google_web": "google_web",
-    "google_app": "google_app",
-    "direct": "direct"
+    "fb": "Facebook",
+    "google": "Google",
+    "(direct)": "direct"
   }
 }
