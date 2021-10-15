@@ -38,6 +38,7 @@ WITH
     WHERE
       params.key = 'screen'
   ),
+
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
@@ -57,6 +58,7 @@ WITH
           WHERE params.key = 'firebase_screen'
         )
 ),
+
   LITERACY_DATA AS (
   SELECT
     *
@@ -72,6 +74,7 @@ WITH
       OR event_name = 'GamePlay')
     AND (device.advertising_id = @user_id OR user_pseudo_id = @user_id OR @user_id = '')
     ),
+
 FILTERED_LIT_DATA AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as action,
@@ -82,7 +85,9 @@ FILTERED_LIT_DATA AS (
     WHERE
         params.key = "action"
         AND (params.value.string_value LIKE CONCAT(@event, '%') OR @event = '')
-), SCREENS AS (
+),
+
+ SCREENS AS (
   SELECT
     `{{dataset}}.getValue`(params.value) as screen,
     action,
@@ -102,6 +107,7 @@ FILTERED_LIT_DATA AS (
     UNNEST(SCREENS.event_params) as params
     WHERE params.key = "label"
 ),
+
 VALS AS (
     SELECT
         action,
@@ -113,6 +119,7 @@ VALS AS (
     UNNEST(LABELS.event_params) as params
     WHERE params.key = "value"
 )
+
 SELECT
   APP_INITIALIZED.attribution_id,
   VALS.action,
