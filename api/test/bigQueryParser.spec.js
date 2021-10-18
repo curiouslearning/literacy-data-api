@@ -195,30 +195,25 @@ describe('BigQueryHelper', () => {
     });
   });
 
+  describe('deduplicateData', () => {
+    it('should remove duplicate rows', () => {
+      const rows = fixtures.map((row) => {return row.row});
+      console.log(rows);
+      const data = rows.concat(rows);
+      const result = bqParser.deduplicateData(data);
+      result.should.deep.equal(rows);
+    });
+    it('should not change an array of unique objects', () => {
+      const rows = fixtures.map((row) => {return row.row});
+      const result = bqParser.deduplicateData(rows);
+      result.should.deep.equal(rows);
+    });
+  });
+
   describe('formatRowsToJson', () => {
     it('should parse data correctly', () => {
-      const rows = [
-        fixtures[0].row,
-        fixtures[1].row,
-        fixtures[2].row,
-        fixtures[3].row,
-        fixtures[4].row,
-        fixtures[5].row,
-        fixtures[6].row,
-        fixtures[7].row,
-        fixtures[8].row
-      ];
-      const expected = [
-        fixtures[0].expected,
-        fixtures[1].expected,
-        fixtures[2].expected,
-        fixtures[3].expected,
-        fixtures[4].expected,
-        fixtures[5].expected,
-        fixtures[6].expected,
-        fixtures[7].expected,
-        fixtures[8].expected
-      ];
+      const rows = fixtures.map((row) => {return row.row});
+      const expected = fixtures.map((row) => {return row.expected});
       const actual = bqParser.formatRowsToJson(rows);
       actual.should.deep.equal(expected);
     });
