@@ -24,13 +24,14 @@ class BigQueryParser {
 // this will only ever iterate over a max of 1000 rows, so it won't tank endpoint speed
 // like totally reformatting the query to deduplicate all the data will
   deduplicateData (rows) {
-    const dedupe = rows.filter((row, index) => {
-      const _row = JSON.stringify(row);
-      return index === rows.findIndex(obj => {
-        return JSON.stringify(obj) === _row;
-      });
+    const map = {};
+    rows.forEach((row) => {
+      const key = JSON.stringify(row);
+      if (!map[key]) {
+        map[key] = row;
+      }
     });
-    return dedupe;
+    return Object.values(map);
   }
 
   formatRowsToJson (rows) {
