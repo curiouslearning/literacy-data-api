@@ -41,7 +41,7 @@ class BigQueryParser {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid? row.uuid : row.user_pseudo_id,
           metadata: {
             continent: row.geo.continent,
             country: row.geo.country,
@@ -51,7 +51,7 @@ class BigQueryParser {
           ad_attribution: {
             source: this.getSource(row.attribution_id),
             data: {
-              advertising_id: row.device.advertising_id,
+              advertising_id: row.uuid? row.uuid : row.device.advertising_id,
             },
           },
         },

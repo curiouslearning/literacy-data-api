@@ -13,25 +13,29 @@ WITH
   APP_INITIALIZED AS (
   SELECT
     params.value.string_value as attribution_id,
+    props.value.string_value as uuid,
     CAST(event_timestamp as STRING) as val,
     "app_initialized" as action,
     "timestamp" as label,
     * EXCEPT(user_properties, key, value)
   FROM
     `{{dataset}}.events_*`,
-    UNNEST(event_params) AS params
+    UNNEST(event_params) AS params,
+    UNNEST(user_properties) AS props,
   WHERE
     _TABLE_SUFFIX BETWEEN '20210801' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_name = 'app_initialized'
-    AND params.value.string_value = @ref_id OR @ref_id=''),
+    AND params.value.string_value = @ref_id OR @ref_id='')
+    AND props.key = 'uuid0'
   INIT_SCREEN AS (
     SELECT
       attribution_id,
+      uuid,
       action,
       label,
       val,
       `{{dataset}}.getValue`(params.value) as screen,
-      * EXCEPT(attribution_id, val, action, label, event_params, key, value)
+      * EXCEPT(attribution_id, uuid val, action, label, event_params, key, value)
     FROM
       APP_INITIALIZED,
       UNNEST(APP_INITIALIZED.event_params) as params
@@ -42,11 +46,12 @@ WITH
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
+        uuid,
         action,
         label,
         val,
         "Splash Screen" as screen,
-        * EXCEPT(attribution_id, val, action, label, event_params)
+        * EXCEPT(attribution_id, uuid, val, action, label, event_params)
     FROM
         APP_INITIALIZED
     WHERE
@@ -78,12 +83,15 @@ WITH
 FILTERED_LIT_DATA AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as action,
+        props.value.string_value as uuid,
         * EXCEPT(key, value)
     FROM
         LITERACY_DATA,
-        UNNEST(LITERACY_DATA.event_params) as params
+        UNNEST(LITERACY_DATA.event_params) as params,
+        UNNEST(LITERACY_DATA.user_properties) as props,
     WHERE
         params.key = "action"
+        props.key = "uuid0"
         AND (params.value.string_value LIKE CONCAT(@event, '%') OR @event = '')
 ),
 
