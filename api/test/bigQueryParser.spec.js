@@ -96,16 +96,16 @@ describe('BigQueryHelper', () => {
       actual.should.equal(expected.event.profile);
     });
 
-    it('should return null on an improperly formatted string', () => {
+    it('should return "unknown" on an improperly formatted string', () => {
       const row = fixtures[6].row;
       const actual = bqParser.getProfile(row.screen);
-      expect(actual).to.be.null;
+      expect(actual).to.equal("unknown");
     });
 
-    it('should return null on an improperly formatted string', () => {
+    it('should return "unknown" on an improperly formatted string', () => {
       const row = fixtures[2].row;
       const actual = bqParser.getProfile(row.screen);
-      expect(actual).to.be.null;
+      expect(actual).to.equal("unknown");
     });
   });
 
@@ -198,7 +198,6 @@ describe('BigQueryHelper', () => {
   describe('deduplicateData', () => {
     it('should remove duplicate rows', () => {
       const rows = fixtures.map((row) => {return row.row});
-      console.log(rows);
       const data = rows.concat(rows);
       const result = bqParser.deduplicateData(data);
       result.should.deep.equal(rows);

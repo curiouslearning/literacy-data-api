@@ -295,7 +295,6 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-        console.log("beep");
         request
           .get('/fetch_latest')
           .query({
@@ -307,7 +306,6 @@ describe('Literacy API Routes', () => {
           .expect(200)
           .end((err, fi) => {
             if (err) return done(err);
-            console.log("boop");
             fi.body.data.should.deep.equal(expected);
             done();
           });
@@ -364,7 +362,6 @@ describe('Literacy API Routes', () => {
       .end((err, res)=> {
         if (err) return done(err);
 
-        console.log(`cursor: ${res.body.nextCursor}`)
         request
           .get('/fetch_latest')
           .query({

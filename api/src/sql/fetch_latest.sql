@@ -10,32 +10,53 @@ AS(
     END
 );
 WITH
+  UUIDS AS (
+    SELECT
+      user_pseudo_id,
+      params.value.string_value as uuid,
+      event_params
+    FROM
+      `{{dataset}}.events_*`,
+      UNNEST(event_params) as params
+    WHERE
+      _TABLE_SUFFIX BETWEEN '20211201' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
+      AND app_info.id = @pkg_id
+      AND event_name = "LogUserUUID"
+      AND params.key = "uuid"
+  ),
+
+  UUID_AND_PROFILE AS (
+    SELECT
+      * EXCEPT(event_params),
+      params.value.int_value as profile
+    FROM
+      UUIDs,
+      UNNEST(event_params) as params
+    WHERE
+      params.key = "profile"
+  ),
   APP_INITIALIZED AS (
   SELECT
     params.value.string_value as attribution_id,
-    props.value.string_value as uuid,
     CAST(event_timestamp as STRING) as val,
     "app_initialized" as action,
     "timestamp" as label,
     * EXCEPT(user_properties, key, value)
   FROM
     `{{dataset}}.events_*`,
-    UNNEST(event_params) AS params,
-    UNNEST(user_properties) AS props,
+    UNNEST(event_params) AS params
   WHERE
     _TABLE_SUFFIX BETWEEN '20210801' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
     AND event_name = 'app_initialized'
-    AND params.value.string_value = @ref_id OR @ref_id='')
-    AND props.key = 'uuid0'
+    AND params.value.string_value = @ref_id OR @ref_id=''),
   INIT_SCREEN AS (
     SELECT
       attribution_id,
-      uuid,
       action,
       label,
       val,
       `{{dataset}}.getValue`(params.value) as screen,
-      * EXCEPT(attribution_id, uuid val, action, label, event_params, key, value)
+      * EXCEPT(attribution_id, val, action, label, event_params, key, value)
     FROM
       APP_INITIALIZED,
       UNNEST(APP_INITIALIZED.event_params) as params
@@ -46,12 +67,11 @@ WITH
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
-        uuid,
         action,
         label,
         val,
         "Splash Screen" as screen,
-        * EXCEPT(attribution_id, uuid, val, action, label, event_params)
+        * EXCEPT(attribution_id, val, action, label, event_params)
     FROM
         APP_INITIALIZED
     WHERE
@@ -83,15 +103,12 @@ WITH
 FILTERED_LIT_DATA AS (
     SELECT
         `{{dataset}}.getValue`(params.value) as action,
-        props.value.string_value as uuid,
         * EXCEPT(key, value)
     FROM
         LITERACY_DATA,
-        UNNEST(LITERACY_DATA.event_params) as params,
-        UNNEST(LITERACY_DATA.user_properties) as props,
+        UNNEST(LITERACY_DATA.event_params) as params
     WHERE
         params.key = "action"
-        props.key = "uuid0"
         AND (params.value.string_value LIKE CONCAT(@event, '%') OR @event = '')
 ),
 
@@ -128,16 +145,20 @@ VALS AS (
     WHERE params.key = "value"
 )
 
+
 SELECT
   APP_INITIALIZED.attribution_id,
   VALS.action,
   VALS.label,
   VALS.val,
   VALS.screen,
+  UUID_AND_PROFILE.profile,
+  UUID_AND_PROFILE.uuid,
   VALS.* EXCEPT(action, label, val, screen, event_params, user_properties)
 FROM
   VALS
 INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
+INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = VALS.user_pseudo_id AND (VALS.screen = "Splash Screen" OR VALS.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR VALS.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
 UNION ALL(
   SELECT
     attribution_id,
@@ -145,9 +166,12 @@ UNION ALL(
     label,
     val,
     screen,
-    * EXCEPT(attribution_id, action, screen, label, val)
+    UUID_AND_PROFILE.profile,
+    UUID_AND_PROFILE.uuid,
+    INIT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
   FROM
     INIT_SCREEN
+    INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = INIT_SCREEN.user_pseudo_id AND (INIT_SCREEN.screen = "Splash Screen" OR INIT_SCREEN.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR INIT_SCREEN.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
 )
 UNION ALL (
   SELECT
@@ -156,8 +180,11 @@ UNION ALL (
     label,
     val,
     screen,
-    * EXCEPT(attribution_id, action, screen, label, val)
+    UUID_AND_PROFILE.profile,
+    UUID_AND_PROFILE.uuid,
+    DEFAULT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
   FROM
     DEFAULT_SCREEN
+    INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = DEFAULT_SCREEN.user_pseudo_id AND (DEFAULT_SCREEN.screen = "Splash Screen" OR DEFAULT_SCREEN.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR DEFAULT_SCREEN.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
 )
 ORDER BY event_timestamp DESC

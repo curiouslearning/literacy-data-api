@@ -62,7 +62,7 @@ class BigQueryParser {
           value_type: this.getValueType(row.label),
           value: this.getValue(row.label) || row.val,
           level: this.getLevel(row.screen) || this.getLevel(row.label)||this.getLevel(row.action)||"0",
-          profile: this.getProfile(row.screen) || 'unknown',
+          profile: row.profile? row.profile: this.getProfile(row.screen),
           rawData: {
             action: row.action,
             label: row.label,
@@ -99,7 +99,7 @@ class BigQueryParser {
     try {
       return screen.split(':')[1].trim();
     } catch(e) {
-      return null;
+      return "unknown";
     }
   }
 
