@@ -20,18 +20,11 @@ class BigQueryParser {
   constructor(mapping){
     this.mapping = mapping;
   }
-// https://stackoverflow.com/questions/2218999/how-to-remove-all-duplicates-from-an-array-of-objects
 // this will only ever iterate over a max of 1000 rows, so it won't tank endpoint speed
 // like totally reformatting the query to deduplicate all the data will
   deduplicateData (rows) {
-    const map = {};
-    rows.forEach((row) => {
-      const key = JSON.stringify(row);
-      if (!map[key]) {
-        map[key] = row;
-      }
-    });
-    return Object.values(map);
+    const set = new Set(rows);
+    return [...set];
   }
 
   formatRowsToJson (rows) {
@@ -41,7 +34,7 @@ class BigQueryParser {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.uuid? row.uuid : row.user_pseudo_id,
+          id: row.uuid? row.uuid : null,
           metadata: {
             continent: row.geo.continent,
             country: row.geo.country,
@@ -49,10 +42,7 @@ class BigQueryParser {
             city: row.geo.city,
           },
           ad_attribution: {
-            source: this.getSource(row.attribution_id),
-            data: {
-              advertising_id: row.uuid? row.uuid : row.device.advertising_id,
-            },
+            source: this.getSource(row.attribution_id)
           },
         },
         event: {

@@ -168,7 +168,7 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
             continent: row.geo.continent,
             country: row.geo.country,
@@ -177,9 +177,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
@@ -253,7 +250,7 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
             continent: row.geo.continent,
             country: row.geo.country,
@@ -262,9 +259,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
@@ -319,7 +313,7 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
             continent: row.geo.continent,
             country: row.geo.country,
@@ -328,9 +322,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
