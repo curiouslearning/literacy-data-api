@@ -1,12 +1,9 @@
 [{
 		"row": {
-			"user_pseudo_id": "pseudo_id_1",
+			"uuid": "pseudo_id_1",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 1001,
-			"device": {
-				"advertising_id": "fake-ad-id-1"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -39,10 +36,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-1"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -69,13 +63,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_22",
+			"uuid": "pseudo_id_22",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10022,
-			"device": {
-				"advertising_id": "fake-ad-id-22"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -108,10 +99,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-22"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -138,13 +126,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_52",
+			"uuid": "pseudo_id_52",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10052,
-			"device": {
-				"advertising_id": "fake-ad-id-52"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -177,10 +162,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-52"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -207,13 +189,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_53",
+			"uuid": "pseudo_id_53",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10053,
-			"device": {
-				"advertising_id": "fake-ad-id-53"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -246,10 +225,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-53"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -276,13 +252,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_77",
+			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
-			"device": {
-				"advertising_id": "fake-ad-id-77"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -315,10 +288,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-77"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -345,13 +315,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_77",
+			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
-			"device": {
-				"advertising_id": "fake-ad-id-77"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -384,10 +351,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-77"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -414,13 +378,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_77",
+			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
-			"device": {
-				"advertising_id": "fake-ad-id-77"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -453,10 +414,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-77"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -483,13 +441,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_77",
+			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
-			"device": {
-				"advertising_id": "fake-ad-id-77"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -522,10 +477,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-77"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
@@ -552,13 +504,10 @@
 	},
 	{
 		"row": {
-			"user_pseudo_id": "pseudo_id_22",
+			"uuid": "pseudo_id_22",
 			"attribution_id": "referral_source_8675309",
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10022,
-			"device": {
-				"advertising_id": "fake-ad-id-22"
-			},
 			"event_date": "fake-date",
 			"geo": {
 				"continent": "fake-continent",
@@ -591,10 +540,7 @@
 					"city": "fake-city"
 				},
 				"ad_attribution": {
-					"source": "no-source",
-					"data": {
-						"advertising_id": "fake-ad-id-22"
-					}
+					"source": "no-source"
 				}
 			},
 			"event": {
