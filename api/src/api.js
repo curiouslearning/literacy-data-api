@@ -67,6 +67,7 @@ async function fetchLatestHandler (req, res, next) {
       ref_id: searchParams.attribution_id || '',
       user_id: searchParams.user_id || '',
       event: searchParams.event || '',
+      utm_campaign: searchParams.utm_campaign || '',
       cursor: Number(searchParams.from) * 1000000, //convert to micros
       //only search back as far as we need to
       range:  Math.ceil(((Date.now()/1000) - searchParams.from)/DAYINSECONDS),

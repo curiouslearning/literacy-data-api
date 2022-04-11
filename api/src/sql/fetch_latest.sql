@@ -9,7 +9,20 @@ AS(
         ELSE NULL
     END
 );
-WITH
+WITH 
+ METADATA AS( 
+    SELECT
+      params.*
+    FROM
+      (
+        SELECT * EXCEPT(key, val)
+        FROM `{{dataset}}.deep_link_parameters`,
+        UNNEST(metadata) as fields
+        WHERE(
+          fields.key = 'utm_campaign'
+          AND fields.val = utm_campaign) OR @utm_campaign = ''
+      ) as params
+  ),
   UUIDS AS (
     SELECT
       user_pseudo_id,
@@ -32,6 +45,7 @@ WITH
     FROM
       UUIDs,
       UNNEST(event_params) as params
+    INNER JOIN METADATA on UUID_AND_PROFILE.user_pseudo_id = METADATA.user_pseudo_id
     WHERE
       params.key = "profile"
   ),
@@ -63,7 +77,6 @@ WITH
     WHERE
       params.key = 'screen'
   ),
-
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
@@ -152,6 +165,7 @@ SELECT
   VALS.label,
   VALS.val,
   VALS.screen,
+  METADATA.metadata
   UUID_AND_PROFILE.profile,
   UUID_AND_PROFILE.uuid,
   VALS.* EXCEPT(action, label, val, screen, event_params, user_properties)
@@ -159,6 +173,7 @@ FROM
   VALS
 INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
 INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = VALS.user_pseudo_id AND (VALS.screen = "Splash Screen" OR VALS.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR VALS.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
+INNER JOIN METADATA on METADATA.user_pseudo_id = VALS.user_pseudo_id
 UNION ALL(
   SELECT
     attribution_id,
@@ -166,12 +181,14 @@ UNION ALL(
     label,
     val,
     screen,
+    METADATA.metadata
     UUID_AND_PROFILE.profile,
     UUID_AND_PROFILE.uuid,
     INIT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
   FROM
     INIT_SCREEN
     INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = INIT_SCREEN.user_pseudo_id AND (INIT_SCREEN.screen = "Splash Screen" OR INIT_SCREEN.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR INIT_SCREEN.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
+    INNER JOIN METADATA on METADATA.user_pseudo_id = INIT_SCREEN.user_pseudo_id
 )
 UNION ALL (
   SELECT
@@ -180,11 +197,11 @@ UNION ALL (
     label,
     val,
     screen,
+    METADATA.metadata
     UUID_AND_PROFILE.profile,
     UUID_AND_PROFILE.uuid,
     DEFAULT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
   FROM
     DEFAULT_SCREEN
     INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = DEFAULT_SCREEN.user_pseudo_id AND (DEFAULT_SCREEN.screen = "Splash Screen" OR DEFAULT_SCREEN.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR DEFAULT_SCREEN.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
-)
-ORDER BY event_timestamp DESC
+    INNER JOIN METADATA on METADATA.user_pseudo_id = DEFAULT_SCREEN.user_pseudo_id AND (DEFAULT_SCREEN.screen = "Splash Screen" OR DEFAULT_SCREEN.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR DEFAULT_SCREEN.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))) ORDER BY event_timestamp DESC
