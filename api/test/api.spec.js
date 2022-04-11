@@ -170,6 +170,8 @@ describe('Literacy API Routes', () => {
         user: {
           id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
@@ -252,6 +254,8 @@ describe('Literacy API Routes', () => {
         user: {
           id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
@@ -315,6 +319,8 @@ describe('Literacy API Routes', () => {
         user: {
           id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
