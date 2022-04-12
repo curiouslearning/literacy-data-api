@@ -29,6 +29,11 @@ class BigQueryParser {
 
   formatRowsToJson (rows) {
     let resObj = rows.map((row) => {
+      let metadata= {};
+      row.metadata.forEach(kvp => { //only store most recent value for key
+          metadata[kvp.key] = kvp.val
+      });
+
       return {
         attribution_url: row.attribution_id,
         app_id: row.app_package_name,
@@ -36,10 +41,8 @@ class BigQueryParser {
         user: {
           id: row.uuid? row.uuid : null,
           metadata: {
-            continent: row.geo.continent,
-            country: row.geo.country,
-            region: row.geo.region,
-            city: row.geo.city,
+            ...metadata,
+            ...row.geo,
           },
           ad_attribution: {
             source: this.getSource(row.attribution_id)

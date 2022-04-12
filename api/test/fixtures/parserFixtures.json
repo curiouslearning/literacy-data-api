@@ -2,6 +2,10 @@
 		"row": {
 			"uuid": "pseudo_id_1",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 1001,
 			"event_date": "fake-date",
@@ -30,6 +34,8 @@
 			"user": {
 				"id": "pseudo_id_1",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -65,6 +71,10 @@
 		"row": {
 			"uuid": "pseudo_id_22",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10022,
 			"event_date": "fake-date",
@@ -93,6 +103,8 @@
 			"user": {
 				"id": "pseudo_id_22",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -128,6 +140,10 @@
 		"row": {
 			"uuid": "pseudo_id_52",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10052,
 			"event_date": "fake-date",
@@ -156,6 +172,8 @@
 			"user": {
 				"id": "pseudo_id_52",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -191,6 +209,10 @@
 		"row": {
 			"uuid": "pseudo_id_53",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10053,
 			"event_date": "fake-date",
@@ -219,6 +241,8 @@
 			"user": {
 				"id": "pseudo_id_53",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -254,6 +278,10 @@
 		"row": {
 			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
 			"event_date": "fake-date",
@@ -282,6 +310,8 @@
 			"user": {
 				"id": "pseudo_id_77",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -317,6 +347,10 @@
 		"row": {
 			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
 			"event_date": "fake-date",
@@ -345,6 +379,8 @@
 			"user": {
 				"id": "pseudo_id_77",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -380,6 +416,10 @@
 		"row": {
 			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
 			"event_date": "fake-date",
@@ -408,6 +448,8 @@
 			"user": {
 				"id": "pseudo_id_77",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -443,6 +485,10 @@
 		"row": {
 			"uuid": "pseudo_id_77",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10077,
 			"event_date": "fake-date",
@@ -471,6 +517,8 @@
 			"user": {
 				"id": "pseudo_id_77",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",
@@ -506,6 +554,10 @@
 		"row": {
 			"uuid": "pseudo_id_22",
 			"attribution_id": "referral_source_8675309",
+			"metadata":[
+				{"key": "key1", "val": "val1"},
+				{"key": "key2", "val": "val2"}
+			],
 			"app_package_name": "com.eduapp4syria.feedthemonsterENGLISH",
 			"event_timestamp": 10022,
 			"event_date": "fake-date",
@@ -534,6 +586,8 @@
 			"user": {
 				"id": "pseudo_id_22",
 				"metadata": {
+					"key1": "val1",
+					"key2": "val2",
 					"continent": "fake-continent",
 					"country": "fake-country",
 					"region": "fake-region",

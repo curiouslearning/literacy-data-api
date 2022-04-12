@@ -63,7 +63,13 @@ WITH
     WHERE
       params.key = 'screen'
   ),
-
+  METADATA AS( 
+    SELECT
+      params.*
+    FROM
+      `{{dataset}}.deep_link_parameters*` as params
+    INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.use_pseudo_id = params.user_pseudo_id
+  ),
   DEFAULT_SCREEN AS (
     SELECT
         attribution_id,
@@ -152,6 +158,7 @@ SELECT
   VALS.label,
   VALS.val,
   VALS.screen,
+  METADATA.metadata
   UUID_AND_PROFILE.profile,
   UUID_AND_PROFILE.uuid,
   VALS.* EXCEPT(action, label, val, screen, event_params, user_properties)
@@ -159,6 +166,7 @@ FROM
   VALS
 INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
 INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = VALS.user_pseudo_id AND (VALS.screen = "Splash Screen" OR VALS.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR VALS.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
+INNER JOIN METADATA on METADATA.user_pseudo_id = VALS.user_pseudo_id
 UNION ALL(
   SELECT
     attribution_id,
