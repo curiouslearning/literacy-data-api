@@ -37,7 +37,8 @@ const getDataset = function (map, id, getHistoric) {
 
 function sendRows(res, rows, nextCursor) {
   const parser = new BigQueryParser(config.sourceMapping);
-  const resObj = parser.formatRowsToJson(rows);
+  const dedupe = parser.deduplicateData(rows);
+  const resObj = parser.formatRowsToJson(dedupe);
   return res.status(200).json({nextCursor, size: resObj.length, data: resObj});
 }
 

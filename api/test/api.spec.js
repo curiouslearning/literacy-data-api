@@ -168,8 +168,10 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
@@ -177,9 +179,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
@@ -253,8 +252,10 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
@@ -262,9 +263,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
@@ -295,7 +293,6 @@ describe('Literacy API Routes', () => {
       .expect(200)
       .end((err, res)=> {
         if (err) return done(err);
-        console.log("beep");
         request
           .get('/fetch_latest')
           .query({
@@ -307,7 +304,6 @@ describe('Literacy API Routes', () => {
           .expect(200)
           .end((err, fi) => {
             if (err) return done(err);
-            console.log("boop");
             fi.body.data.should.deep.equal(expected);
             done();
           });
@@ -321,8 +317,10 @@ describe('Literacy API Routes', () => {
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid,
           metadata: {
+            key1: row.metadata[0].val,
+            key2: row.metadata[1].val,
             continent: row.geo.continent,
             country: row.geo.country,
             region: row.geo.region,
@@ -330,9 +328,6 @@ describe('Literacy API Routes', () => {
           },
           ad_attribution: {
             source: 'no-source',
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
           },
         },
         event: {
@@ -364,7 +359,6 @@ describe('Literacy API Routes', () => {
       .end((err, res)=> {
         if (err) return done(err);
 
-        console.log(`cursor: ${res.body.nextCursor}`)
         request
           .get('/fetch_latest')
           .query({

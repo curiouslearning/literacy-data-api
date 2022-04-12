@@ -20,26 +20,32 @@ class BigQueryParser {
   constructor(mapping){
     this.mapping = mapping;
   }
+// this will only ever iterate over a max of 1000 rows, so it won't tank endpoint speed
+// like totally reformatting the query to deduplicate all the data will
+  deduplicateData (rows) {
+    const set = new Set(rows);
+    return [...set];
+  }
 
   formatRowsToJson (rows) {
     let resObj = rows.map((row) => {
+      let metadata= {};
+      row.metadata.forEach(kvp => { //only store most recent value for key
+          metadata[kvp.key] = kvp.val
+      });
+
       return {
         attribution_url: row.attribution_id,
         app_id: row.app_package_name,
         ordered_id: row.event_timestamp,
         user: {
-          id: row.user_pseudo_id,
+          id: row.uuid? row.uuid : null,
           metadata: {
-            continent: row.geo.continent,
-            country: row.geo.country,
-            region: row.geo.region,
-            city: row.geo.city,
+            ...metadata,
+            ...row.geo,
           },
           ad_attribution: {
-            source: this.getSource(row.attribution_id),
-            data: {
-              advertising_id: row.device.advertising_id,
-            },
+            source: this.getSource(row.attribution_id)
           },
         },
         event: {
@@ -49,7 +55,7 @@ class BigQueryParser {
           value_type: this.getValueType(row.label),
           value: this.getValue(row.label) || row.val,
           level: this.getLevel(row.screen) || this.getLevel(row.label)||this.getLevel(row.action)||"0",
-          profile: this.getProfile(row.screen) || 'unknown',
+          profile: row.profile? row.profile: this.getProfile(row.screen),
           rawData: {
             action: row.action,
             label: row.label,
@@ -86,7 +92,7 @@ class BigQueryParser {
     try {
       return screen.split(':')[1].trim();
     } catch(e) {
-      return null;
+      return "unknown";
     }
   }
 
