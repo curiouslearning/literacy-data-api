@@ -62,3 +62,51 @@ The API returns user data for a specific app `app_id`. It will return all events
   }
 ```
 events are returned in *ascending* order.
+
+# Developer Instructions
+
+Included here are notes on how to set up the development environment, create builds of the project, and any prerequisite software needed to get started
+
+## Prerequisites
+
+- Node v14.7x
+- npm 6.12x
+- [Docker Desktop](https://www.docker.com/) (for running the development environment)
+- [kind CLI](https://kind.sigs.k8s.io/) for creating the development environment
+- [Helm CLI ](https://helm.sh/docs/intro/install) (for creating and deploying production builds)
+- [kubectl CLI](https://kubernetes.io/docs/tasks/tools/#kubectl) (for deploying builds)
+
+## Getting Started
+
+After ensuring you have all prerequisites installed, clone or download the project from this repository to your local machine. From the `/api` directory, run `npm install` to install all dependencies. 
+
+## Unit Tests
+
+From the `/api` directory run `npm run test`
+
+## Database Access
+
+In order to access BigQuery, you must have a Google Service Account with the proper permissions. Download the private key `.json` file for your account, place it in `/api/keys` (this directory is .gitignored for security purposes) and name it `bigquery-serviceaccount.json`. 
+
+## Running the development environment
+
+from the top level `/dev` directory, run `dev-env.sh` to create the development server in Docker Desktop. To build the project, run `dev/dev.sh`. Follow the instructions in the terminal to begin port-forwarding in the cluster so you can access the application from localhost in your browser. You can rebuild the project at any time by re-running `dev/dev.sh` and restarting port-forwarding.
+
+__Tip__: To inspect the application logs while running the development environment run the following commands in a _new_ terminal window or tab:
+
+1. `kubectl get pods` (returns a list of all K8s pods running)
+2. `kubectl logs pods/{podName}` (show logs for the given pod)
+
+## Deploying to Production
+
+Before deploying to a production cluster for the first time, you must create a secret with your Google Service Account private key on the cluster. From your terminal, run the following command 
+
+`kubectl create secret generic bigquery-serviceaccount --from-file={absolute/path/to/repo}/api/keys`
+
+This command must be re-run only if your secret information changes, if you create a new cluster, or if the secret is somehow removed from your production cluster.
+
+Once your secret is created, run the following command from the top level `helm-charts/` directory
+
+`helm install --values values/prod.yaml {deployment-name} ./literacy-data-api`
+
+You can check the status of the pods by running `kubectl get pods` and `kubectl describe pods/{podName}`
