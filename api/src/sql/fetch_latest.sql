@@ -16,38 +16,41 @@ WITH
     FROM
       (
         SELECT * EXCEPT(key, val)
-        FROM `{{dataset}}.deep_link_parameters`,
+        FROM `{{dataset}}.deep_link_metadata`,
         UNNEST(metadata) as fields
         WHERE(
           fields.key = 'utm_campaign'
-          AND fields.val = utm_campaign) OR @utm_campaign = ''
+          AND fields.val = @utm_campaign) OR @utm_campaign = ''
       ) as params
   ),
   UUIDS AS (
     SELECT
       user_pseudo_id,
-      params.value.string_value as uuid,
       event_params
     FROM
-      `{{dataset}}.events_*`,
-      UNNEST(event_params) as params
+      `{{dataset}}.events_*`
     WHERE
       _TABLE_SUFFIX BETWEEN '20211201' AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
       AND app_info.id = @pkg_id
       AND event_name = "LogUserUUID"
-      AND params.key = "uuid"
   ),
 
   UUID_AND_PROFILE AS (
     SELECT
+      (
+        SELECT `{{dataset}}.get_value`(params.value)
+        FROM UNNEST(event_params) as params
+        WHERE params.key = "uuid"
+      ) as uuid,
+      (
+        SELECT `{{dataset}}.get_value`(params.value)
+        FROM UNNEST(event_params) as params
+        WHERE params.key = "profile"
+      ) as profile,
       * EXCEPT(event_params),
-      params.value.int_value as profile
     FROM
-      UUIDs,
-      UNNEST(event_params) as params
+      UUIDs
     INNER JOIN METADATA on UUID_AND_PROFILE.user_pseudo_id = METADATA.user_pseudo_id
-    WHERE
-      params.key = "profile"
   ),
   APP_INITIALIZED AS (
   SELECT
@@ -115,65 +118,59 @@ WITH
 
 FILTERED_LIT_DATA AS (
     SELECT
-        `{{dataset}}.getValue`(params.value) as action,
-        * EXCEPT(key, value)
+        (
+          SELECT 
+            `{{dataset}}.getValue`(params.value)
+          FROM
+            UNNEST(LITERACY_DATA.event_params) as params
+          WHERE
+            params.key= "action"
+            AND params.value.string_value LIKE CONCAT(@event, '%') OR @event = ''
+        ) as action,
+        (
+          SELECT 
+            `{{dataset}}.getValue`(params.value)
+          FROM
+            UNNEST(LITERACY_DATA.event_params) as params
+          WHERE
+            params.key= "label"
+        ) as label,
+        (
+          SELECT 
+            `{{dataset}}.getValue`(params.value)
+          FROM
+            UNNEST(LITERACY_DATA.event_params) as params
+          WHERE
+            params.key= "value"
+        ) as value,
+        (
+          SELECT 
+            `{{dataset}}.getValue`(params.value)
+          FROM
+            UNNEST(LITERACY_DATA.event_params) as params
+          WHERE
+            params.key= "firebase_screen"
+        ) as screen,
+        * EXCEPT(event_params)
     FROM
-        LITERACY_DATA,
-        UNNEST(LITERACY_DATA.event_params) as params
-    WHERE
-        params.key = "action"
-        AND (params.value.string_value LIKE CONCAT(@event, '%') OR @event = '')
-),
-
- SCREENS AS (
-  SELECT
-    `{{dataset}}.getValue`(params.value) as screen,
-    action,
-    * EXCEPT(action, key, value)
-  FROM
-    FILTERED_LIT_DATA,
-    UNNEST(FILTERED_LIT_DATA.event_params) as params
-  WHERE
-    params.key = "firebase_screen"
-), LABELS AS (
-    SELECT
-        action,
-        `{{dataset}}.getValue`(params.value) as label,
-        screen,
-        * EXCEPT(action, screen, key, value)
-    FROM SCREENS,
-    UNNEST(SCREENS.event_params) as params
-    WHERE params.key = "label"
-),
-
-VALS AS (
-    SELECT
-        action,
-        label,
-        `{{dataset}}.getValue`(params.value) as val,
-        screen,
-        * EXCEPT(label, action, screen, key, value)
-    FROM LABELS,
-    UNNEST(LABELS.event_params) as params
-    WHERE params.key = "value"
+        LITERACY_DATA
 )
-
 
 SELECT
   APP_INITIALIZED.attribution_id,
-  VALS.action,
-  VALS.label,
-  VALS.val,
-  VALS.screen,
-  METADATA.metadata
+  FILTERED_LIT_DATA.action,
+  FILTERED_LIT_DATA.label,
+  FILTERED_LIT_DATA.val,
+  FILTERED_LIT_DATA.screen,
+  METADATA.metadata,
   UUID_AND_PROFILE.profile,
   UUID_AND_PROFILE.uuid,
-  VALS.* EXCEPT(action, label, val, screen, event_params, user_properties)
+  FILTERED_LIT_DATA.* EXCEPT(action, label, val, screen, user_properties)
 FROM
-  VALS
-INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = VALS.user_pseudo_id
-INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = VALS.user_pseudo_id AND (VALS.screen = "Splash Screen" OR VALS.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR VALS.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
-INNER JOIN METADATA on METADATA.user_pseudo_id = VALS.user_pseudo_id
+  FILTERED_LIT_DATA
+INNER JOIN APP_INITIALIZED on APP_INITIALIZED.user_pseudo_id = FILTERED_LIT_DATA.user_pseudo_id
+INNER JOIN UUID_AND_PROFILE on UUID_AND_PROFILE.user_pseudo_id = FILTERED_LIT_DATA.user_pseudo_id AND (FILTERED_LIT_DATA.screen = "Splash Screen" OR FILTERED_LIT_DATA.screen LIKE CONCAT("%- Profile ", UUID_AND_PROFILE.profile) OR FILTERED_LIT_DATA.screen LIKE CONCAT("%Profile: ", UUID_AND_PROFILE.profile))
+INNER JOIN METADATA on METADATA.user_pseudo_id = FILTERED_LIT_DATA.user_pseudo_id
 UNION ALL(
   SELECT
     attribution_id,
@@ -181,7 +178,7 @@ UNION ALL(
     label,
     val,
     screen,
-    METADATA.metadata
+    METADATA.metadata,
     UUID_AND_PROFILE.profile,
     UUID_AND_PROFILE.uuid,
     INIT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
@@ -197,7 +194,7 @@ UNION ALL (
     label,
     val,
     screen,
-    METADATA.metadata
+    METADATA.metadata,
     UUID_AND_PROFILE.profile,
     UUID_AND_PROFILE.uuid,
     DEFAULT_SCREEN.* EXCEPT(attribution_id, action, screen, label, val)
