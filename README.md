@@ -90,7 +90,7 @@ In order to access BigQuery, you must have a Google Service Account with the pro
 
 ## Running the development environment
 
-from the top level `/dev` directory, run `dev-env.sh` to create the development server in Docker Desktop. To build the project, run `dev/dev.sh`. Follow the instructions in the terminal to begin port-forwarding in the cluster so you can access the application from localhost in your browser. You can rebuild the project at any time by re-running `dev/dev.sh` and restarting port-forwarding.
+Change into the top level `/dev` directory (`cd dev`). From this directory, run `dev-env.sh` to create the development server in Docker Desktop. To build the project, run `dev.sh`. Follow the instructions in the terminal to begin port-forwarding in the cluster so you can access the application from localhost in your browser. You can rebuild the project at any time by re-running `dev.sh` and restarting port-forwarding.
 
 __Tip__: To inspect the application logs while running the development environment run the following commands in a _new_ terminal window or tab:
 
