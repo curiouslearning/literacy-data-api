@@ -31,7 +31,7 @@ async function fetchEvents(params) {
   console.log(`Fetching data for: ${JSON.stringify(params)}`)
 
   const dataset = getDataset(appId)
-  const sql = fs.readFileSync('sql/fetch_latest.sql').toString();
+  const sql = fs.readFileSync('src/sql/fetch_latest.sql').toString();
 
   const query = mustache.render(sql, { dataset })
   const options = {
