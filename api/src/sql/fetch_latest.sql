@@ -9,6 +9,7 @@
         (select as struct
             (select case
                     when event_name = 'FirstOpenRefer' then (select params.value.string_value from unnest(event_params) as params where params.key = 'referrer')
+                    when event_name = 'UUIDGenerated' then (select params.value.string_value from unnest(event_params) as params where params.key = 'uuid')
                     else (select params.value.string_value from unnest(event_params) as params where params.key = 'value')
                     end) as string_value,
             (select case
