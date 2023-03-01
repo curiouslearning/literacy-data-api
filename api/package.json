@@ -4,7 +4,7 @@
   "description": "a basic API for interacting with databases of literacy app data",
   "main": "app.js",
   "scripts": {
-    "test": "mocha --recursive -reporter spec -require test/setup.js"
+    "test": "mocha --recursive -reporter spec"
   },
   "repository": {
     "type": "git",
